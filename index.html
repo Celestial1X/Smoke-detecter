@@ -238,19 +238,19 @@
         <div class="col diagram-wrap" id="radiusSeqDiagram"></div>
         <div class="col">
           <div class="formula-block">
-            <span class="formula-label">ลำดับรัศมี</span>
-            <div id="f-radius-seq"></div>
+            <span class="formula-label">รัศมีวงกลมที่ 1</span>
+            <div id="f-radius-1"></div>
           </div>
           <div class="formula-block">
-            <span class="formula-label">สูตรทั่วไป</span>
-            <div id="f-radius-gen"></div>
+            <span class="formula-label">รัศมีวงกลมที่ 2</span>
+            <div id="f-radius-2"></div>
           </div>
           <div class="formula-block">
-            <span class="formula-label">ตรวจสอบด้วยการแทนค่า n</span>
-            <div id="f-radius-check"></div>
+            <span class="formula-label">รัศมีวงกลมที่ 3</span>
+            <div id="f-radius-3"></div>
           </div>
           <div class="legend">
-            <span><i class="dot-swatch" style="background:var(--gold)"></i>วงกลมที่ n</span>
+            <span><i class="dot-swatch" style="background:var(--gold)"></i>วงกลมแต่ละวง</span>
             <span><i class="dot-swatch" style="background:var(--teal)"></i>จุดสัมผัสร่วม</span>
           </div>
         </div>
@@ -265,12 +265,12 @@
       <div class="row" style="margin-top:8px; align-items:flex-start;">
         <div class="col">
           <div class="formula-block">
-            <span class="formula-label">พื้นที่วงกลมที่ n</span>
-            <div id="f-area-n"></div>
+            <span class="formula-label">ผลบวกของพื้นที่วงกลมทั้งหมด</span>
+            <div id="f-area-expand"></div>
           </div>
           <div class="formula-block">
             <span class="formula-label">จัดรูปใหม่</span>
-            <div id="f-area-n2"></div>
+            <div id="f-area-simplify"></div>
           </div>
         </div>
         <div class="col">
@@ -292,7 +292,7 @@
           <div id="f-sum-formula"></div>
         </div>
         <div class="formula-block">
-          <span class="formula-label">แทนค่า a₁ = πr² และอัตราส่วน = 1/4</span>
+          <span class="formula-label">แทนค่า a₁ = πr² และ r = 1/4</span>
           <div id="f-sum-sub"></div>
         </div>
         <div class="formula-block">
@@ -314,7 +314,7 @@
       </div>
       <div class="recap">
         <div class="item"><span class="n">01</span><span class="t">รัศมีวงแรกเป็น r หน่วย ลดลงครึ่งหนึ่งทุกวง เพราะแนบในครึ่งวงกลมก่อนหน้า</span></div>
-        <div class="item"><span class="n">02</span><span class="t">พื้นที่แต่ละวงเป็นอนุกรมเรขาคณิต a₁ = πr² อัตราส่วน 1/4</span></div>
+        <div class="item"><span class="n">02</span><span class="t">พื้นที่แต่ละวงเป็นอนุกรมเรขาคณิต a₁ = πr² อัตราส่วนร่วม r = 1/4</span></div>
         <div class="item"><span class="n">03</span><span class="t">อัตราส่วนอยู่ระหว่าง −1 ถึง 1 อนุกรมจึงลู่เข้า</span></div>
         <div class="item"><span class="n">04</span><span class="t">ใช้สูตร S = a₁/(1−r) แทนค่าได้ S = πr²/(3/4) = (4/3)πr²</span></div>
       </div>
@@ -422,16 +422,16 @@ document.getElementById('radiusSeqDiagram').innerHTML = nestedCirclesSVG({size:4
 const mathTargets = [
   ['f-construct1', 'r_2 + r_2 = r_1'],
   ['f-construct2', 'r_2 = \\dfrac{r_1}{2}'],
-  ['f-construct3', 'r_{n+1} = \\dfrac{1}{2}\\, r_n'],
-  ['f-radius-seq', 'r_1=r,\\ \\ r_2=\\dfrac{r}{2},\\ \\ r_3=\\dfrac{r}{4},\\ \\ldots'],
-  ['f-radius-gen', 'r_n = \\dfrac{r}{2^{\\,n-1}}\\ ,\\quad n = 1,2,3,\\ldots'],
-  ['f-radius-check', '\\begin{aligned} n=1:&\\quad r_1=\\dfrac{r}{2^{0}}=r\\\\ n=2:&\\quad r_2=\\dfrac{r}{2^{1}}=\\dfrac{r}{2}\\\\ n=3:&\\quad r_3=\\dfrac{r}{2^{2}}=\\dfrac{r}{4} \\end{aligned}'],
-  ['f-area-n', 'A_n = \\pi r_n^{\\,2} = \\pi\\left(\\dfrac{r}{2^{\\,n-1}}\\right)^{2}'],
-  ['f-area-n2', 'A_n = \\dfrac{\\pi r^{2}}{4^{\\,n-1}} = \\pi r^{2}\\left(\\dfrac{1}{4}\\right)^{n-1}'],
+  ['f-construct3', 'r_2 = \\dfrac{1}{2}\\, r_1'],
+  ['f-radius-1', 'r_1 = r'],
+  ['f-radius-2', 'r_2 = \\dfrac{r}{2}'],
+  ['f-radius-3', 'r_3 = \\dfrac{r}{4}'],
+  ['f-area-expand', 'S = \\pi r^{2} + \\pi\\left(\\dfrac{r}{2}\\right)^{2} + \\pi\\left(\\dfrac{r}{4}\\right)^{2} + \\pi\\left(\\dfrac{r}{8}\\right)^{2} + \\cdots'],
+  ['f-area-simplify', 'S = \\pi r^{2} + \\dfrac{1}{4}\\pi r^{2} + \\dfrac{1}{16}\\pi r^{2} + \\dfrac{1}{64}\\pi r^{2} + \\cdots'],
   ['f-a1', 'a_1 = \\pi r^{2}'],
-  ['f-ratio', 'r_{\\text{ratio}} = \\dfrac{1}{4}'],
+  ['f-ratio', 'r = \\dfrac{1}{4}'],
   ['f-ratio-range', '-1 < \\dfrac{1}{4} < 1'],
-  ['f-sum-formula', 'S_{\\infty} = \\dfrac{a_1}{1 - r_{\\text{ratio}}}'],
+  ['f-sum-formula', 'S_{\\infty} = \\dfrac{a_1}{1 - r}'],
   ['f-sum-sub', 'S_{\\infty} = \\dfrac{\\pi r^{2}}{\\,1 - \\tfrac{1}{4}\\,} = \\dfrac{\\pi r^{2}}{\\tfrac{3}{4}}'],
   ['f-sum-calc', 'S_{\\infty} = \\pi r^{2} \\times \\dfrac{4}{3} = \\dfrac{4}{3}\\pi r^{2}'],
   ['f-final', '\\dfrac{4}{3}\\pi r^{2}'],
