@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>พื้นเหยียบผลิตไฟฟ้า — คู่มือสร้างฉบับสนามจริง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171A;
+    --panel:#1D2124;
+    --panel-2:#22272B;
+    --line:#33393E;
+    --text:#EDEDE5;
+    --muted:#9BA1A6;
+    --amber:#F5B700;
+    --orange:#FF6B35;
+    --teal:#2EC4B6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    line-height:1.7;
+    font-weight:300;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk','IBM Plex Sans Thai',sans-serif;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{color:var(--amber);}
+  img,svg{max-width:100%;display:block;}
+
+  /* background grid texture like blueprint paper */
+  .blueprint-bg{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:40px 40px;
+    background-position:-1px -1px;
+    opacity:0.35;
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .wrap{max-width:980px; margin:0 auto; padding:0 24px; position:relative; z-index:1;}
+
+  /* NAV */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(20,23,26,0.9);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .navbar{
+    max-width:980px;margin:0 auto;padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:1rem;}
+  .brand .dot{width:10px;height:10px;background:var(--amber);border-radius:50%; box-shadow:0 0 10px var(--amber);}
+  nav ul{list-style:none; display:flex; gap:22px;}
+  nav a{color:var(--muted); text-decoration:none; font-size:0.85rem;}
+  nav a:hover{color:var(--amber);}
+
+  /* HERO */
+  .hero{padding:90px 0 60px; position:relative;}
+  .eyebrow{
+    font-family:'IBM Plex Mono'; font-size:0.75rem; color:var(--amber);
+    letter-spacing:0.12em; text-transform:uppercase; margin-bottom:18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:''; width:24px; height:1px; background:var(--amber);}
+  .hero h1{font-size:clamp(2.1rem, 5vw, 3.4rem); line-height:1.15; max-width:820px;}
+  .hero h1 .hl{color:var(--amber);}
+  .hero p.lead{max-width:620px; color:var(--muted); font-size:1.05rem; margin-top:20px;}
+
+  .spec-row{display:flex; gap:32px; margin-top:44px; flex-wrap:wrap;}
+  .spec-item{border-left:2px solid var(--orange); padding-left:14px;}
+  .spec-item .num{font-family:'Space Grotesk'; font-size:1.6rem; font-weight:700; color:var(--text);}
+  .spec-item .lbl{font-size:0.78rem; color:var(--muted); margin-top:4px;}
+
+  /* SIGNATURE DIAGRAM */
+  .diagram-section{padding:40px 0 80px;}
+  .diagram-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    padding:34px; position:relative; overflow:hidden;
+  }
+  .diagram-card::before{
+    content:'FIG.01 — CROSS SECTION';
+    position:absolute; top:14px; left:18px; font-family:'IBM Plex Mono';
+    font-size:0.68rem; color:var(--muted); letter-spacing:0.08em;
+  }
+  .diagram-hint{
+    text-align:center; font-family:'IBM Plex Mono'; font-size:0.75rem; color:var(--teal);
+    margin-top:14px; letter-spacing:0.04em;
+  }
+
+  /* section shells */
+  section{padding:70px 0; border-top:1px solid var(--line);}
+  .section-head{display:flex; align-items:baseline; gap:16px; margin-bottom:36px;}
+  .section-head .idx{font-family:'IBM Plex Mono'; color:var(--orange); font-size:0.9rem;}
+  .section-head h2{font-size:1.7rem;}
+  .section-sub{color:var(--muted); max-width:640px; margin-top:-22px; margin-bottom:32px; font-size:0.95rem;}
+
+  /* materials table */
+  table{width:100%; border-collapse:collapse; font-size:0.92rem;}
+  th{
+    text-align:left; font-family:'IBM Plex Mono'; font-weight:500; font-size:0.72rem;
+    color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;
+    padding:10px 12px; border-bottom:1px solid var(--line);
+  }
+  td{padding:14px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:hover td{background:var(--panel-2);}
+  .qty{font-family:'IBM Plex Mono'; color:var(--amber); white-space:nowrap;}
+  .group-title{
+    font-family:'Space Grotesk'; font-weight:600; color:var(--teal);
+    margin:30px 0 8px; font-size:1rem;
+    display:flex; align-items:center; gap:8px;
+  }
+  .group-title:first-child{margin-top:0;}
+
+  /* tools chips */
+  .chip-grid{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;}
+  .chip{
+    border:1px solid var(--line); background:var(--panel); padding:8px 14px;
+    border-radius:100px; font-size:0.85rem; color:var(--muted);
+  }
+
+  /* steps */
+  .steps{counter-reset:step;}
+  .step{
+    display:grid; grid-template-columns:70px 1fr; gap:22px;
+    padding:26px 0; border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .step:last-child{border-bottom:none;}
+  .step .stepnum{
+    counter-increment:step; font-family:'Space Grotesk'; font-weight:700;
+    font-size:1.8rem; color:var(--line); position:relative;
+  }
+  .step .stepnum::after{
+    content: counter(step, decimal-leading-zero);
+    position:absolute; left:0; top:0; color:var(--orange);
+  }
+  .step h3{font-size:1.05rem; margin-bottom:8px;}
+  .step p{color:var(--muted); font-size:0.92rem;}
+  .step .tag{
+    display:inline-block; margin-top:10px; font-family:'IBM Plex Mono'; font-size:0.7rem;
+    color:var(--teal); border:1px solid var(--teal); border-radius:3px; padding:2px 8px;
+  }
+
+  /* weatherproof band */
+  .weather-band{
+    background:linear-gradient(120deg, rgba(46,196,182,0.08), rgba(46,196,182,0.0));
+    border:1px solid rgba(46,196,182,0.35); border-radius:4px; padding:30px;
+  }
+  .weather-band h3{color:var(--teal); font-size:1.1rem; margin-bottom:14px;}
+  .weather-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; margin-top:16px;}
+  .weather-item{font-size:0.88rem;}
+  .weather-item .k{color:var(--text); font-weight:500; display:block; margin-bottom:4px;}
+  .weather-item .v{color:var(--muted);}
+
+  /* circuit */
+  .circuit-card{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:30px; overflow-x:auto;}
+  .circuit-card svg{min-width:1500px;}
+  .schem-legend{display:flex; flex-wrap:wrap; gap:18px; margin-top:18px; padding-top:18px; border-top:1px solid var(--line);}
+  .schem-legend .li{display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono'; font-size:0.76rem; color:var(--muted);}
+  .schem-legend svg{width:34px; height:22px; flex-shrink:0; min-width:0;}
+
+  /* honesty callout */
+  .callout{
+    border-left:3px solid var(--orange); background:var(--panel); padding:18px 22px;
+    font-size:0.9rem; color:var(--muted); border-radius:0 4px 4px 0;
+  }
+  .callout b{color:var(--text);}
+
+  footer{padding:50px 0 80px; text-align:center; color:var(--muted); font-size:0.8rem; font-family:'IBM Plex Mono';}
+
+  @media (max-width:640px){
+    .step{grid-template-columns:44px 1fr;}
+    .step .stepnum{font-size:1.3rem;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  /* press animation */
+  .press-btn{
+    margin-top:22px; display:inline-flex; align-items:center; gap:10px;
+    background:var(--amber); color:#14171A; border:none; padding:12px 22px;
+    border-radius:100px; font-family:'IBM Plex Sans Thai'; font-weight:600; font-size:0.9rem;
+    cursor:pointer;
+  }
+  .press-btn:active{transform:translateY(2px);}
+
+  /* 3D viewer */
+  .viewer-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    padding:0; position:relative; overflow:hidden;
+  }
+  .viewer-topbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 20px; border-bottom:1px solid var(--line);
+  }
+  .viewer-topbar .label{font-family:'IBM Plex Mono'; font-size:0.7rem; color:var(--muted); letter-spacing:0.08em;}
+  #viewer3d{width:100%; height:460px; display:block; cursor:grab; touch-action:none;}
+  #viewer3d:active{cursor:grabbing;}
+  .viewer-stage{position:relative; width:100%; height:460px;}
+  .viewer-stage canvas{position:absolute; inset:0;}
+  .leader-svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+  .label-layer{position:absolute; inset:0; pointer-events:none;}
+  .part-label{
+    position:absolute; transform:translate(-50%,-50%);
+    font-family:'IBM Plex Mono'; font-size:0.72rem; white-space:nowrap;
+    background:rgba(20,23,26,0.88); border:1px solid var(--line);
+    border-radius:3px; padding:4px 9px; color:var(--text);
+    display:flex; align-items:center; gap:6px;
+    transition:opacity 0.15s;
+  }
+  .part-label .dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .viewer-controls{
+    display:flex; gap:10px; padding:16px 20px; flex-wrap:wrap;
+    border-top:1px solid var(--line);
+  }
+  .vbtn{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:9px 16px; border-radius:100px; font-family:'IBM Plex Sans Thai'; font-size:0.82rem;
+    cursor:pointer; transition:border-color 0.2s, color 0.2s;
+  }
+  .vbtn:hover{border-color:var(--amber); color:var(--amber);}
+  .vbtn.primary{background:var(--amber); color:#14171A; border-color:var(--amber); font-weight:600;}
+  .vbtn.primary:hover{color:#14171A; opacity:0.9;}
+  .legend3d{display:flex; flex-wrap:wrap; gap:16px; padding:4px 20px 18px;}
+  .legend-item{display:flex; align-items:center; gap:7px; font-size:0.78rem; color:var(--muted);}
+  .legend-swatch{width:11px; height:11px; border-radius:3px; flex-shrink:0;}
+  .viewer-hint{
+    position:absolute; bottom:14px; left:20px; font-family:'IBM Plex Mono'; font-size:0.68rem;
+    color:var(--muted); pointer-events:none;
+  }
+
+  /* sourcing table */
+  .src-link{color:var(--amber); text-decoration:none; font-family:'IBM Plex Mono'; font-size:0.82rem;}
+  .src-link:hover{text-decoration:underline;}
+  .src-note{font-size:0.78rem; color:var(--muted); margin-top:3px; display:block;}
+
+  /* flow diagram */
+  .flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; margin-top:8px;}
+  .flow-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    padding:16px 18px; min-width:150px; flex:1;
+  }
+  .flow-box .ft{font-family:'Space Grotesk'; font-weight:600; font-size:0.92rem; margin-bottom:5px;}
+  .flow-box .fs{font-size:0.78rem; color:var(--muted);}
+  .flow-arrow{
+    display:flex; align-items:center; justify-content:center; color:var(--amber);
+    font-size:1.3rem; padding:0 10px; flex:0 0 auto;
+  }
+  @media (max-width:720px){ .flow{flex-direction:column;} .flow-arrow{transform:rotate(90deg); padding:6px 0;} }
+
+  .danger-band{
+    background:linear-gradient(120deg, rgba(255,107,53,0.09), rgba(255,107,53,0.0));
+    border:1px solid rgba(255,107,53,0.4); border-radius:4px; padding:26px 30px;
+  }
+  .danger-band h3{color:var(--orange); font-size:1.05rem; margin-bottom:12px;}
+  .danger-band ul{padding-left:20px; color:var(--muted); font-size:0.9rem;}
+  .danger-band li{margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="blueprint-bg"></div>
+
+<header>
+  <div class="navbar">
+    <div class="brand"><span class="dot"></span> พื้นเหยียบผลิตไฟฟ้า</div>
+    <nav>
+      <ul>
+        <li><a href="#concept">หลักการ</a></li>
+        <li><a href="#materials">วัสดุ</a></li>
+        <li><a href="#build">ขั้นตอน</a></li>
+        <li><a href="#circuit">วงจร</a></li>
+        <li><a href="#weather">กันแดดฝน</a></li>
+        <li><a href="#model3d">โมเดล 3D</a></li>
+        <li><a href="#sourcing">แหล่งซื้อ</a></li>
+        <li><a href="#lighting">ไฟทางเดิน</a></li>
+        <li><a href="#vehicle">สเกลถนน</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div class="eyebrow">โครงงานพลังงานจลน์ · ระดับสาธิต / วิทยาศาสตร์โรงเรียน</div>
+  <h1>เหยียบหนึ่งครั้ง<br>ได้ไฟฟ้า<span class="hl">หนึ่งจังหวะ</span></h1>
+  <p class="lead">คู่มือสร้างแผ่นพื้นแปลงแรงเหยียบเป็นไฟฟ้าด้วยกลไกแร็คแอนด์พีเนียนขับมอเตอร์ไฟฟ้ากระแสตรง ออกแบบให้ติดตั้งกลางแจ้งได้จริง ทนแดด ทนฝน พร้อมแบบผังวัสดุ วงจร และลำดับการประกอบทีละขั้น</p>
+
+  <div class="spec-row">
+    <div class="spec-item"><div class="num">2</div><div class="lbl">มอเตอร์กำเนิดไฟ / แผ่น</div></div>
+    <div class="spec-item"><div class="num">3–6V</div><div class="lbl">แรงดันต่อจังหวะเหยียบ</div></div>
+    <div class="spec-item"><div class="num">IP65</div><div class="lbl">ระดับกันน้ำเป้าหมาย</div></div>
+    <div class="spec-item"><div class="num">300×300</div><div class="lbl">ขนาดแผ่น (มม.)</div></div>
+  </div>
+</div>
+
+<div class="wrap diagram-section">
+  <div class="diagram-card">
+    <svg viewBox="0 0 900 420" id="tileSvg" style="margin-top:22px;">
+      <!-- ground shadow -->
+      <ellipse cx="450" cy="390" rx="330" ry="16" fill="#000" opacity="0.35"/>
+
+      <!-- exploded layers -->
+      <!-- base box -->
+      <g id="layerBase">
+        <rect x="140" y="300" width="620" height="70" rx="6" fill="#2A3136" stroke="#454C52"/>
+        <text x="160" y="290" fill="#9BA1A6" font-family="IBM Plex Mono" font-size="13">05 · กล่องฐาน ABS/อะคริลิกกันน้ำ IP65</text>
+      </g>
+
+      <!-- rectifier/circuit board -->
+      <g id="layerCircuit">
+        <rect x="380" y="250" width="140" height="34" rx="3" fill="#1D2124" stroke="#2EC4B6"/>
+        <text x="235" y="272" fill="#2EC4B6" font-family="IBM Plex Mono" font-size="13">04 · บอร์ดเรียงกระแส + ชาร์จ</text>
+        <circle cx="400" cy="267" r="3" fill="#2EC4B6"/>
+        <circle cx="415" cy="267" r="3" fill="#2EC4B6"/>
+        <circle cx="430" cy="267" r="3" fill="#2EC4B6"/>
+      </g>
+
+      <!-- motors + rack and pinion -->
+      <g id="layerMech">
+        <rect x="230" y="195" width="60" height="40" rx="4" fill="#F5B700" opacity="0.9"/>
+        <circle cx="260" cy="235" r="14" fill="none" stroke="#F5B700" stroke-width="3"/>
+        <rect x="610" y="195" width="60" height="40" rx="4" fill="#F5B700" opacity="0.9"/>
+        <circle cx="640" cy="235" r="14" fill="none" stroke="#F5B700" stroke-width="3"/>
+        <rect x="290" y="228" width="320" height="10" fill="#FF6B35"/>
+        <text x="200" y="185" fill="#F5B700" font-family="IBM Plex Mono" font-size="13">03 · มอเตอร์ + แร็คแอนด์พีเนียน</text>
+      </g>
+
+      <!-- springs -->
+      <g id="layerSpring" stroke="#9BA1A6" stroke-width="2.5" fill="none">
+        <path d="M175 300 v-40 q10 -8 0 -16 q-10 -8 0 -16 q10 -8 0 -16 v-12"/>
+        <path d="M725 300 v-40 q10 -8 0 -16 q-10 -8 0 -16 q10 -8 0 -16 v-12"/>
+        <text x="70" y="220" fill="#9BA1A6" font-family="IBM Plex Mono" font-size="13">02 · สปริงกดคืนตัว</text>
+      </g>
+
+      <!-- top plate -->
+      <g id="layerTop">
+        <rect x="150" y="170" width="600" height="30" rx="4" fill="#3A3F44" stroke="#EDEDE5" stroke-opacity="0.4"/>
+        <text x="360" y="163" fill="#EDEDE5" font-family="IBM Plex Mono" font-size="13">01 · แผ่นยางกันลื่น + กันน้ำ</text>
+      </g>
+
+      <!-- LED indicator with pulse -->
+      <circle id="ledDot" cx="820" cy="330" r="9" fill="#333"/>
+      <text x="795" y="360" fill="#9BA1A6" font-family="IBM Plex Mono" font-size="11">LED</text>
+    </svg>
+    <button class="press-btn" onclick="pressAnim()">▾ ลองกดจำลอง</button>
+    <div class="diagram-hint">กดปุ่มด้านบนเพื่อดูจังหวะแผ่นบนกดลง → เฟืองหมุน → LED ติด</div>
+  </div>
+</div>
+
+<section id="concept">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">01</span><h2>หลักการทำงาน</h2></div>
+    <p class="section-sub">ใช้หลักแปลงพลังงานกล (แรงเหยียบ) เป็นพลังงานไฟฟ้า ผ่านกลไกเชิงกลก่อนเข้าสู่เครื่องกำเนิดไฟฟ้าขนาดเล็ก แทนการใช้แผ่นเพียโซซึ่งให้กระแสต่ำเกินกว่าจะใช้งานจริง</p>
+
+    <table>
+      <tr><th>ลำดับพลังงาน</th><th>อธิบาย</th></tr>
+      <tr><td class="qty">แรงกด</td><td>น้ำหนักคนเหยียบกดแผ่นบนลงในแนวดิ่ง ~5–15 มม.</td></tr>
+      <tr><td class="qty">กลไก</td><td>แร็ค (rack) ที่ยึดกับแผ่นบนเลื่อนลง ขบกับเฟืองพีเนียน (pinion) ทำให้แกนมอเตอร์หมุนเร็วขึ้นหลายเท่า</td></tr>
+      <tr><td class="qty">ไฟฟ้า</td><td>มอเตอร์ไฟฟ้ากระแสตรงทำหน้าที่ย้อนกลับเป็นเครื่องกำเนิดไฟฟ้า (dynamo) จ่ายแรงดันออกมาเป็นพัลส์</td></tr>
+      <tr><td class="qty">จัดเก็บ</td><td>วงจรเรียงกระแส (rectifier) แปลงเป็น DC แล้วชาร์จเก็บไว้ในตัวเก็บประจุหรือแบตเตอรี่</td></tr>
+      <tr><td class="qty">คืนตัว</td><td>สปริงกดดันแผ่นบนกลับสู่ตำแหน่งเดิม พร้อมรับจังหวะเหยียบครั้งถัดไป</td></tr>
+    </table>
+
+    <div class="callout" style="margin-top:26px;">
+      <b>ข้อเท็จจริงที่ควรรู้ก่อนสร้าง:</b> พลังงานที่ได้ต่อการเหยียบหนึ่งครั้งมีปริมาณน้อย (ระดับพอจุดไฟ LED หรือชาร์จตัวเก็บประจุ) ไม่เพียงพอสำหรับจ่ายไฟบ้านหรืออุปกรณ์กำลังสูง โครงงานนี้เหมาะเป็น <b>ชิ้นงานสาธิตหลักการเก็บเกี่ยวพลังงาน (energy harvesting)</b> ไม่ใช่แหล่งพลังงานหลัก
+    </div>
+  </div>
+</section>
+
+<section id="materials">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">02</span><h2>วัสดุและอุปกรณ์</h2></div>
+    <p class="section-sub">แยกเป็น 3 กลุ่ม: โครงสร้างภายนอก (ต้องทนแดดฝน) · กลไกกำเนิดไฟฟ้า · วงจรไฟฟ้า</p>
+
+    <div class="group-title">🏗 โครงสร้างภายนอก — ทนแดด ทนฝน</div>
+    <table>
+      <tr><th>รายการ</th><th>จำนวน</th><th>หน้าที่ / เหตุผลที่เลือก</th></tr>
+      <tr><td>แผ่นยางกันลื่น (rubber tile) หรือ EPDM หนา 10–15 มม.</td><td class="qty">1 แผ่น</td><td>ผิวสัมผัสด้านบน ทนรังสี UV ไม่ลื่นเมื่อเปียก ยืดหยุ่นรับแรงกด</td></tr>
+      <tr><td>แผ่นอะคริลิกหรือ ABS กันน้ำ (สำหรับกล่องกลไก)</td><td class="qty">1 ชุด</td><td>ทำโครงกล่องปิดกลไกและวงจร ขึ้นรูปง่าย ทนน้ำเมื่อซีลรอยต่อ</td></tr>
+      <tr><td>ยางซีลกันน้ำ (rubber gasket) รอบขอบฝาปิด</td><td class="qty">1 เมตร</td><td>ป้องกันน้ำฝนไหลซึมเข้าตามรอยต่อฝา</td></tr>
+      <tr><td>กาวซิลิโคนกันน้ำ (silicone sealant)</td><td class="qty">1 หลอด</td><td>อุดรอยต่อ รูสกรู และจุดที่สายไฟทะลุกล่อง</td></tr>
+      <tr><td>น็อต-สกรูสแตนเลส</td><td class="qty">ตามจุดยึด</td><td>ไม่เป็นสนิมเมื่อโดนฝนซ้ำๆ</td></tr>
+      <tr><td>สเปรย์เคลือบกันสนิม/กันความชื้น (conformal coating)</td><td class="qty">1 กระป๋อง</td><td>พ่นเคลือบแผงวงจรกันความชื้นซึมเข้าตัวถ่ายทอดไฟฟ้า</td></tr>
+    </table>
+
+    <div class="group-title">⚙ กลไกกำเนิดไฟฟ้า</div>
+    <table>
+      <tr><th>รายการ</th><th>จำนวน</th><th>หน้าที่ / เหตุผลที่เลือก</th></tr>
+      <tr><td>มอเตอร์เกียร์ไฟฟ้ากระแสตรง (DC gear motor) ใช้เป็นเครื่องกำเนิดไฟฟ้า</td><td class="qty">2 ตัว</td><td>ติดที่มุมทแยง 2 มุม เมื่อแกนหมุนจะจ่ายแรงดันย้อนกลับออกมา ยิ่งหมุนเร็ว แรงดันยิ่งสูง</td></tr>
+      <tr><td>ชุดเฟืองแร็คแอนด์พีเนียน (rack and pinion)</td><td class="qty">2 ชุด</td><td>แปลงแรงกดแนวดิ่งให้เป็นแรงหมุนรอบเร็วเข้ามอเตอร์ ติดเฉพาะมุมที่มีมอเตอร์</td></tr>
+      <tr><td>สปริงอัด (compression spring) รับน้ำหนัก</td><td class="qty">4 ตัว</td><td>ดันแผ่นบนคืนตำแหน่งเดิมหลังถูกเหยียบ — ใส่ครบ 4 มุมแม้มีมอเตอร์แค่ 2 มุม เพื่อรับน้ำหนักไม่ให้แผ่นเอียง</td></tr>
+      <tr><td>บูชนำทาง/รางเลื่อน (linear guide/bushing)</td><td class="qty">4 ชุด</td><td>บังคับให้แผ่นบนเคลื่อนที่ขึ้นลงตรงแนว ไม่เอียง</td></tr>
+    </table>
+
+    <div class="group-title">🔌 วงจรไฟฟ้า</div>
+    <table>
+      <tr><th>รายการ</th><th>จำนวน</th><th>หน้าที่ / เหตุผลที่เลือก</th></tr>
+      <tr><td>ไดโอดเรียงกระแส 1N4007 (ต่อเป็นบริดจ์)</td><td class="qty">8 ตัว</td><td>แปลงแรงดันสลับทิศจากมอเตอร์ให้เป็นไฟ DC ทิศเดียว (4 ตัว/บริดจ์ × มอเตอร์ 2 ตัว)</td></tr>
+      <tr><td>ตัวเก็บประจุ (capacitor) 1000–4700 µF</td><td class="qty">2–4 ตัว</td><td>เก็บพลังงานจากพัลส์สั้นๆ ให้จ่ายออกได้ต่อเนื่องขึ้น</td></tr>
+      <tr><td>โมดูลชาร์จแบตเตอรี่ลิเธียม (TP4056)</td><td class="qty">1 ตัว</td><td>ควบคุมการชาร์จแบตเตอรี่สำรองอย่างปลอดภัย</td></tr>
+      <tr><td>แบตเตอรี่ลิเธียม 3.7V หรือ power bank เล็ก</td><td class="qty">1 ก้อน</td><td>กักเก็บพลังงานสะสมไว้ใช้งาน</td></tr>
+      <tr><td>บอร์ดบูสต์คอนเวอร์เตอร์ (step-up converter)</td><td class="qty">1 ตัว</td><td>ดันแรงดันให้คงที่สำหรับจ่าย LED หรือ USB</td></tr>
+      <tr><td>LED หรือแถบไฟ LED แสดงผล</td><td class="qty">ตามต้องการ</td><td>แสดงผลว่ามีไฟฟ้าถูกผลิตขึ้นจริง</td></tr>
+      <tr><td>สายไฟหุ้มฉนวนกันน้ำ + ปลั๊กกันน้ำ</td><td class="qty">ตามจุดต่อ</td><td>จุดเชื่อมต่อทั้งหมดต้องกันความชื้น</td></tr>
+    </table>
+
+    <div class="group-title">🧰 เครื่องมือที่ใช้</div>
+    <div class="chip-grid">
+      <span class="chip">สว่าน + ดอกสว่าน</span>
+      <span class="chip">เลื่อยตัดอะคริลิก/เลื่อยฉลุ</span>
+      <span class="chip">หัวแร้งบัดกรี + ตะกั่ว</span>
+      <span class="chip">ปืนกาวร้อน</span>
+      <span class="chip">มัลติมิเตอร์</span>
+      <span class="chip">ไขควงชุด</span>
+      <span class="chip">คีมตัด-ปอกสาย</span>
+      <span class="chip">แผ่นรองตัด / คัตเตอร์</span>
+    </div>
+  </div>
+</section>
+
+<section id="build">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">03</span><h2>ขั้นตอนการประกอบ</h2></div>
+    <p class="section-sub">ลำดับนี้ยึดหลักประกอบจากโครงสร้างเข้าสู่กลไก แล้วปิดท้ายด้วยการซีลกันน้ำเสมอ เพื่อไม่ให้ต้องรื้อกล่องที่ปิดสนิทแล้วซ้ำ</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>ตัดและขึ้นรูปโครงกล่องฐาน</h3>
+          <p>ตัดแผ่นอะคริลิก/ABS ตามแบบเป็นกล่องฐานขนาด 300×300 มม. เจาะรูยึดมอเตอร์ที่มุมทแยง 2 มุม เจาะรูเสาค้ำรับน้ำหนักอีก 2 มุมที่เหลือ และรูสำหรับรางเลื่อนแผ่นบนครบทั้ง 4 มุม</p>
+          <span class="tag">โครงสร้าง</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>ติดตั้งมอเตอร์และชุดเฟืองแร็คแอนด์พีเนียน</h3>
+          <p>ยึดมอเตอร์ทั้ง 2 ตัวเข้ากับฐานที่มุมทแยง ประกอบเฟืองพีเนียนเข้าแกนมอเตอร์ ให้ขบกับแร็คที่จะยึดติดใต้แผ่นบนพอดี ส่วนอีก 2 มุมที่เหลือใส่แค่เสาค้ำ/บูชนำทางเปล่าๆ ไว้รับน้ำหนักและกันแผ่นเอียง ไม่ต้องมีรัก/พีเนียน ทดสอบหมุนด้วยมือให้ลื่นไม่ติดขัดก่อนประกอบจริง</p>
+          <span class="tag">กลไก</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>ใส่สปริงและรางนำทาง</h3>
+          <p>วางสปริงอัด 4 ตัวที่มุมฐาน ใส่บูชนำทางให้แผ่นบนเลื่อนขึ้นลงตรงแนวดิ่ง ไม่บิดเอียงขณะถูกเหยียบ</p>
+          <span class="tag">กลไก</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>เดินวงจรไฟฟ้า</h3>
+          <p>บัดกรีขาเอาต์พุตมอเตอร์ทั้ง 2 ตัวเข้าวงจรบริดจ์ไดโอดของตัวเอง รวมสายทั้งสองชุดเข้าตัวเก็บประจุและโมดูลชาร์จ TP4056 ต่อออกบอร์ดบูสต์คอนเวอร์เตอร์และ LED ทดสอบขั้วให้ถูกต้องด้วยมัลติมิเตอร์ก่อนยึดถาวร</p>
+          <span class="tag">วงจร</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>ประกอบแผ่นบนและทดสอบแรงกด</h3>
+          <p>ติดแผ่นยางกันลื่นบนแผ่นฐานบน ยึดแร็คใต้แผ่น วางประกบลงบนกล่องฐาน กดทดสอบด้วยมือเบาๆ ให้เฟืองขบและมอเตอร์หมุนลื่น ไม่มีจุดสะดุด</p>
+          <span class="tag">ประกอบ</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>ซีลกันน้ำและปิดกล่อง</h3>
+          <p>พ่นสเปรย์กันความชื้นเคลือบแผงวงจร ทากาวซิลิโคนตามรอยต่อฝาและจุดที่สายไฟทะลุออก ใส่ยางซีลรอบขอบก่อนขันน็อตปิดกล่อง เป็นขั้นตอนสุดท้ายที่ห้ามข้าม</p>
+          <span class="tag">กันน้ำ</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="stepnum"></div>
+        <div>
+          <h3>ทดสอบภาคสนาม</h3>
+          <p>เหยียบซ้ำหลายครั้งวัดแรงดันที่ตัวเก็บประจุด้วยมัลติมิเตอร์ ทดสอบราดน้ำเบาๆ ตรวจสอบว่าไม่มีน้ำซึมเข้าภายในก่อนติดตั้งใช้งานจริงกลางแจ้ง</p>
+          <span class="tag">ทดสอบ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="circuit">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">04</span><h2>ผังวงจรไฟฟ้าทั้งระบบ</h2></div>
+    <p class="section-sub">แผนผังฉบับเต็มตั้งแต่มอเตอร์กำเนิดไฟ ไปจนถึงโคมไฟ LED ทางเดิน วาดด้วยสัญลักษณ์มาตรฐานทางไฟฟ้า พร้อมคำอธิบายทุกจุดต่อ — เลื่อนดูรายละเอียดแต่ละส่วนได้</p>
+    <div class="circuit-card">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1250" font-family="IBM Plex Mono, monospace">
+<rect x="0" y="0" width="1800" height="1250" fill="#14171A"/>
+<g stroke="#2A3136" stroke-width="1" opacity="0.35">
+<line x1="0" y1="0" x2="0" y2="1250"/>
+<line x1="40" y1="0" x2="40" y2="1250"/>
+<line x1="80" y1="0" x2="80" y2="1250"/>
+<line x1="120" y1="0" x2="120" y2="1250"/>
+<line x1="160" y1="0" x2="160" y2="1250"/>
+<line x1="200" y1="0" x2="200" y2="1250"/>
+<line x1="240" y1="0" x2="240" y2="1250"/>
+<line x1="280" y1="0" x2="280" y2="1250"/>
+<line x1="320" y1="0" x2="320" y2="1250"/>
+<line x1="360" y1="0" x2="360" y2="1250"/>
+<line x1="400" y1="0" x2="400" y2="1250"/>
+<line x1="440" y1="0" x2="440" y2="1250"/>
+<line x1="480" y1="0" x2="480" y2="1250"/>
+<line x1="520" y1="0" x2="520" y2="1250"/>
+<line x1="560" y1="0" x2="560" y2="1250"/>
+<line x1="600" y1="0" x2="600" y2="1250"/>
+<line x1="640" y1="0" x2="640" y2="1250"/>
+<line x1="680" y1="0" x2="680" y2="1250"/>
+<line x1="720" y1="0" x2="720" y2="1250"/>
+<line x1="760" y1="0" x2="760" y2="1250"/>
+<line x1="800" y1="0" x2="800" y2="1250"/>
+<line x1="840" y1="0" x2="840" y2="1250"/>
+<line x1="880" y1="0" x2="880" y2="1250"/>
+<line x1="920" y1="0" x2="920" y2="1250"/>
+<line x1="960" y1="0" x2="960" y2="1250"/>
+<line x1="1000" y1="0" x2="1000" y2="1250"/>
+<line x1="1040" y1="0" x2="1040" y2="1250"/>
+<line x1="1080" y1="0" x2="1080" y2="1250"/>
+<line x1="1120" y1="0" x2="1120" y2="1250"/>
+<line x1="1160" y1="0" x2="1160" y2="1250"/>
+<line x1="1200" y1="0" x2="1200" y2="1250"/>
+<line x1="1240" y1="0" x2="1240" y2="1250"/>
+<line x1="1280" y1="0" x2="1280" y2="1250"/>
+<line x1="1320" y1="0" x2="1320" y2="1250"/>
+<line x1="1360" y1="0" x2="1360" y2="1250"/>
+<line x1="1400" y1="0" x2="1400" y2="1250"/>
+<line x1="1440" y1="0" x2="1440" y2="1250"/>
+<line x1="1480" y1="0" x2="1480" y2="1250"/>
+<line x1="1520" y1="0" x2="1520" y2="1250"/>
+<line x1="1560" y1="0" x2="1560" y2="1250"/>
+<line x1="1600" y1="0" x2="1600" y2="1250"/>
+<line x1="1640" y1="0" x2="1640" y2="1250"/>
+<line x1="1680" y1="0" x2="1680" y2="1250"/>
+<line x1="1720" y1="0" x2="1720" y2="1250"/>
+<line x1="1760" y1="0" x2="1760" y2="1250"/>
+<line x1="0" y1="0" x2="1800" y2="0"/>
+<line x1="0" y1="40" x2="1800" y2="40"/>
+<line x1="0" y1="80" x2="1800" y2="80"/>
+<line x1="0" y1="120" x2="1800" y2="120"/>
+<line x1="0" y1="160" x2="1800" y2="160"/>
+<line x1="0" y1="200" x2="1800" y2="200"/>
+<line x1="0" y1="240" x2="1800" y2="240"/>
+<line x1="0" y1="280" x2="1800" y2="280"/>
+<line x1="0" y1="320" x2="1800" y2="320"/>
+<line x1="0" y1="360" x2="1800" y2="360"/>
+<line x1="0" y1="400" x2="1800" y2="400"/>
+<line x1="0" y1="440" x2="1800" y2="440"/>
+<line x1="0" y1="480" x2="1800" y2="480"/>
+<line x1="0" y1="520" x2="1800" y2="520"/>
+<line x1="0" y1="560" x2="1800" y2="560"/>
+<line x1="0" y1="600" x2="1800" y2="600"/>
+<line x1="0" y1="640" x2="1800" y2="640"/>
+<line x1="0" y1="680" x2="1800" y2="680"/>
+<line x1="0" y1="720" x2="1800" y2="720"/>
+<line x1="0" y1="760" x2="1800" y2="760"/>
+<line x1="0" y1="800" x2="1800" y2="800"/>
+<line x1="0" y1="840" x2="1800" y2="840"/>
+<line x1="0" y1="880" x2="1800" y2="880"/>
+<line x1="0" y1="920" x2="1800" y2="920"/>
+<line x1="0" y1="960" x2="1800" y2="960"/>
+<line x1="0" y1="1000" x2="1800" y2="1000"/>
+<line x1="0" y1="1040" x2="1800" y2="1040"/>
+<line x1="0" y1="1080" x2="1800" y2="1080"/>
+<line x1="0" y1="1120" x2="1800" y2="1120"/>
+<line x1="0" y1="1160" x2="1800" y2="1160"/>
+<line x1="0" y1="1200" x2="1800" y2="1200"/>
+<line x1="0" y1="1240" x2="1800" y2="1240"/>
+</g>
+<text x="40" y="50" font-size="30" fill="#EDEDE5" text-anchor="start" font-weight="700" font-family="Space Grotesk">แผนผังวงจรไฟฟ้าทั้งระบบ</text>
+<text x="40" y="78" font-size="15" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">แผ่นพื้นเหยียบผลิตไฟฟ้า → เก็บแบตเตอรี่ → เลี้ยงไฟทางเดิน (สัญลักษณ์มาตรฐานทางไฟฟ้า)</text>
+<text x="40" y="130" font-size="16" fill="#F5B700" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">01 · ชุดกำเนิดไฟฟ้า (มุมทแยง ×2 ตัว ต่อขนานกัน)</text>
+<rect x="60" y="160" width="420" height="260" rx="6" fill="#1B1F23" stroke="#2A3136" stroke-width="1.5"/>
+<text x="80" y="190" font-size="14" fill="#EDEDE5" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">ชุดที่ 1 — วาดละเอียด</text>
+<circle cx="140" cy="260" r="26" fill="none" stroke="#F5B700" stroke-width="3"/>
+<text x="140" y="266" font-size="20" fill="#F5B700" text-anchor="middle" font-weight="700" font-family="Space Grotesk">M1</text>
+<line x1="166" y1="250" x2="160" y2="220" stroke="#9BA1A6" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="166" y1="270" x2="160" y2="300" stroke="#9BA1A6" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="160" y1="260" x2="183.68629150101523" y2="236.31370849898477" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="206.31370849898477" y1="213.68629150101523" x2="230" y2="190" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="rotate(-45.0 195.0 225.0)">
+<line x1="179.0" y1="225.0" x2="187.0" y2="225.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="203.0" y1="225.0" x2="211.0" y2="225.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="187.0,216.0 187.0,234.0 203.0,225.0" fill="#FF6B35"/>
+<line x1="203.0" y1="215.0" x2="203.0" y2="235.0" stroke="#FF6B35" stroke-width="3"/>
+</g>
+<line x1="300" y1="260" x2="276.31370849898474" y2="236.31370849898477" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="253.68629150101523" y1="213.68629150101523" x2="230" y2="190" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="rotate(-135.0 265.0 225.0)">
+<line x1="249.0" y1="225.0" x2="257.0" y2="225.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="273.0" y1="225.0" x2="281.0" y2="225.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="257.0,216.0 257.0,234.0 273.0,225.0" fill="#FF6B35"/>
+<line x1="273.0" y1="215.0" x2="273.0" y2="235.0" stroke="#FF6B35" stroke-width="3"/>
+</g>
+<line x1="230" y1="330" x2="206.31370849898477" y2="306.31370849898474" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="183.68629150101523" y1="283.68629150101526" x2="160" y2="260" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="rotate(-135.0 195.0 295.0)">
+<line x1="179.0" y1="295.0" x2="187.0" y2="295.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="203.0" y1="295.0" x2="211.0" y2="295.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="187.0,286.0 187.0,304.0 203.0,295.0" fill="#FF6B35"/>
+<line x1="203.0" y1="285.0" x2="203.0" y2="305.0" stroke="#FF6B35" stroke-width="3"/>
+</g>
+<line x1="230" y1="330" x2="253.68629150101523" y2="306.31370849898474" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="276.31370849898474" y1="283.68629150101526" x2="300" y2="260" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="rotate(-45.0 265.0 295.0)">
+<line x1="249.0" y1="295.0" x2="257.0" y2="295.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="273.0" y1="295.0" x2="281.0" y2="295.0" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="257.0,286.0 257.0,304.0 273.0,295.0" fill="#FF6B35"/>
+<line x1="273.0" y1="285.0" x2="273.0" y2="305.0" stroke="#FF6B35" stroke-width="3"/>
+</g>
+<circle cx="160" cy="260" r="4.5" fill="#9BA1A6"/>
+<circle cx="300" cy="260" r="4.5" fill="#9BA1A6"/>
+<circle cx="230" cy="190" r="4.5" fill="#FF6B35"/>
+<circle cx="230" cy="330" r="4.5" fill="#5C6469"/>
+<text x="150" y="265" font-size="11" fill="#9BA1A6" text-anchor="end" font-weight="400" font-family="IBM Plex Mono">AC</text>
+<text x="310" y="265" font-size="11" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">AC</text>
+<text x="230" y="176" font-size="11" fill="#FF6B35" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">D1-D4</text>
+<line x1="230" y1="190" x2="450" y2="190" stroke="#FF6B35" stroke-width="3" stroke-linecap="round"/>
+<line x1="230" y1="330" x2="450" y2="330" stroke="#5C6469" stroke-width="3" stroke-linecap="round"/>
+<text x="238" y="182" font-size="15" fill="#FF6B35" text-anchor="start" font-weight="700" font-family="IBM Plex Mono">+</text>
+<text x="238" y="348" font-size="15" fill="#5C6469" text-anchor="start" font-weight="700" font-family="IBM Plex Mono">−</text>
+<rect x="520" y="226" width="260" height="68" rx="5" fill="#1B1F23" stroke="#2A3136" stroke-width="1.5"/>
+<circle cx="558" cy="260" r="18" fill="none" stroke="#F5B700" stroke-width="3"/>
+<text x="558" y="266" font-size="20" fill="#F5B700" text-anchor="middle" font-weight="700" font-family="Space Grotesk">M</text>
+<line x1="612" y1="260" x2="638" y2="238" stroke="#FF6B35" stroke-width="2"/>
+<line x1="664" y1="260" x2="638" y2="238" stroke="#FF6B35" stroke-width="2"/>
+<line x1="638" y1="282" x2="612" y2="260" stroke="#FF6B35" stroke-width="2"/>
+<line x1="638" y1="282" x2="664" y2="260" stroke="#FF6B35" stroke-width="2"/>
+<text x="638" y="300" font-size="10.5" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">บริดจ์ D1-D4</text>
+<line x1="576" y1="260" x2="612" y2="260" stroke="#9BA1A6" stroke-width="2" stroke-linecap="round"/>
+<text x="528" y="220" font-size="12.5" fill="#EDEDE5" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">ชุดที่ 2 (มุมทแยงตรงข้าม)</text>
+<text x="520" y="320" font-size="12.5" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">เหมือนชุดที่ 1 ทุกประการ — ต่อขนาน (parallel) เข้าบัสเดียวกัน</text>
+<text x="520" y="340" font-size="11.5" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">หมายเหตุ: อีก 2 มุมที่เหลือมีแค่เสาค้ำ+สปริงรับน้ำหนัก ไม่มีมอเตอร์</text>
+<line x1="60" y1="190" x2="1740" y2="190" stroke="#FF6B35" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="60" y1="330" x2="1740" y2="330" stroke="#5C6469" stroke-width="3.5" stroke-linecap="round"/>
+<text x="1700" y="180" font-size="13" fill="#FF6B35" text-anchor="end" font-weight="700" font-family="IBM Plex Mono">BUS +</text>
+<text x="1700" y="352" font-size="13" fill="#5C6469" text-anchor="end" font-weight="700" font-family="IBM Plex Mono">BUS −</text>
+<line x1="790" y1="246" x2="816" y2="246" stroke="#FF6B35" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="816" y1="246" x2="816" y2="190" stroke="#FF6B35" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="816" cy="190" r="3.5" fill="#FF6B35"/>
+<line x1="790" y1="274" x2="830" y2="274" stroke="#5C6469" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="830" y1="274" x2="830" y2="330" stroke="#5C6469" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="830" cy="330" r="3.5" fill="#5C6469"/>
+<circle cx="450" cy="190" r="4" fill="#FF6B35"/>
+<circle cx="450" cy="330" r="4" fill="#5C6469"/>
+<text x="40" y="545" font-size="16" fill="#2EC4B6" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">02 · กรองไฟและเก็บพลังงาน</text>
+<line x1="200" y1="190" x2="200" y2="640" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="200" y1="330" x2="200" y2="780" stroke="#5C6469" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="200" cy="190" r="4" fill="#FF6B35"/>
+<circle cx="200" cy="330" r="4" fill="#5C6469"/>
+<line x1="200" y1="640" x2="1740" y2="640" stroke="#FF6B35" stroke-width="3" stroke-linecap="round"/>
+<line x1="200" y1="780" x2="1740" y2="780" stroke="#5C6469" stroke-width="3" stroke-linecap="round"/>
+<line x1="300" y1="640.0" x2="300" y2="704.0" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="300" y1="716.0" x2="300" y2="780.0" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="284" y1="704.0" x2="316" y2="704.0" stroke="#2EC4B6" stroke-width="3.5"/>
+<path d="M 284 716.0 Q 300 726.0 316 716.0" stroke="#2EC4B6" stroke-width="3.5" fill="none"/>
+<text x="322" y="708.0" font-size="16" fill="#2EC4B6" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">+</text>
+<line x1="300" y1="640" x2="300" y2="646" stroke="#2EC4B6" stroke-width="3" stroke-linecap="round"/>
+<line x1="300" y1="774" x2="300" y2="780" stroke="#2EC4B6" stroke-width="3" stroke-linecap="round"/>
+<circle cx="300" cy="640" r="3.5" fill="#FF6B35"/>
+<circle cx="300" cy="780" r="3.5" fill="#5C6469"/>
+<text x="300" y="815" font-size="14" fill="#2EC4B6" text-anchor="middle" font-weight="700" font-family="Space Grotesk">C1</text>
+<text x="300" y="833" font-size="11.5" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">1000-4700µF</text>
+<rect x="430" y="615" width="300" height="190" rx="6" fill="#1B1F23" stroke="#2EC4B6" stroke-width="1.5"/>
+<text x="580.0" y="643" font-size="14.5" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">โมดูลชาร์จแบตเตอรี่ลิเธียม</text>
+<text x="580.0" y="663" font-size="14.5" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">4.2V พร้อมวงจรจ่ายไฟ</text>
+<line x1="430" y1="640" x2="430" y2="695" stroke="#FF6B35" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="420" y1="695" x2="430" y2="695" stroke="#FF6B35" stroke-width="2.2" stroke-linecap="round"/>
+<text x="414" y="699" font-size="11.5" fill="#FF6B35" text-anchor="end" font-weight="400" font-family="IBM Plex Mono">IN+</text>
+<line x1="430" y1="780" x2="430" y2="755" stroke="#5C6469" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="420" y1="755" x2="430" y2="755" stroke="#5C6469" stroke-width="2.2" stroke-linecap="round"/>
+<text x="414" y="759" font-size="11.5" fill="#5C6469" text-anchor="end" font-weight="400" font-family="IBM Plex Mono">IN−</text>
+<line x1="730" y1="675" x2="770" y2="675" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<text x="738" y="669" font-size="11.5" fill="#F5B700" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">BAT+</text>
+<line x1="730" y1="725" x2="770" y2="725" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<text x="738" y="741" font-size="11.5" fill="#F5B700" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">BAT−</text>
+<line x1="514.0" y1="805" x2="514.0" y2="839" stroke="#EDEDE5" stroke-width="2.2" stroke-linecap="round"/>
+<text x="514.0" y="855" font-size="12" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">5V OUT</text>
+<circle cx="514.0" cy="839" r="3.5" fill="#EDEDE5"/>
+<line x1="770" y1="675" x2="801" y2="685.0" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="770" y1="725" x2="801" y2="715.0" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="801.0" y1="676.0" x2="801.0" y2="724.0" stroke="#F5B700" stroke-width="4"/>
+<line x1="813.0" y1="687.0" x2="813.0" y2="713.0" stroke="#F5B700" stroke-width="7"/>
+<line x1="825.0" y1="676.0" x2="825.0" y2="724.0" stroke="#F5B700" stroke-width="4"/>
+<line x1="837.0" y1="687.0" x2="837.0" y2="713.0" stroke="#F5B700" stroke-width="7"/>
+<line x1="795.0" y1="700.0" x2="801.0" y2="700.0" stroke="#F5B700" stroke-width="2" stroke-linecap="round"/>
+<text x="825" y="660.0" font-size="13.5" fill="#F5B700" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">แบตเตอรี่</text>
+<text x="825" y="676.0" font-size="10.5" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">Li-ion / LiFePO4 3.7-4.2V</text>
+<line x1="837.0" y1="685.0" x2="895" y2="685.0" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="837.0" y1="715.0" x2="895" y2="715.0" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="895" y1="685.0" x2="895" y2="715.0" stroke="#F5B700" stroke-width="0.1" stroke-linecap="round"/>
+<text x="830" y="550" font-size="15" fill="#FF6B35" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">03 · บูสต์แรงดัน (ถ้าใช้โคม 12V)</text>
+<line x1="895" y1="685.0" x2="895" y2="640" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="895" y1="715.0" x2="895" y2="680" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="895" y1="640" x2="830" y2="640" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="895" y1="680" x2="830" y2="680" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<rect x="830" y="610" width="230" height="110" rx="6" fill="#1B1F23" stroke="#FF6B35" stroke-width="1.5"/>
+<text x="945.0" y="640" font-size="13.5" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">MT3608 / XL6009</text>
+<text x="945.0" y="660" font-size="12.5" fill="#EDEDE5" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">บูสต์คอนเวอร์เตอร์</text>
+<text x="945.0" y="680" font-size="11.5" fill="#FF6B35" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">output 12V</text>
+<text x="846" y="644" font-size="10.5" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">IN</text>
+<line x1="1060" y1="640" x2="1100" y2="640" stroke="#FF6B35" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="1060" y1="680" x2="1100" y2="680" stroke="#FF6B35" stroke-width="2.2" stroke-linecap="round"/>
+<text x="1068" y="634" font-size="11" fill="#FF6B35" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">+12V</text>
+<text x="1068" y="696" font-size="11" fill="#FF6B35" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">GND</text>
+<line x1="514.0" y1="839" x2="514.0" y2="900" stroke="#EDEDE5" stroke-width="2.2" stroke-dasharray="4 4" stroke-linecap="round"/>
+<line x1="514.0" y1="900" x2="1000" y2="900" stroke="#EDEDE5" stroke-width="2.2" stroke-dasharray="4 4" stroke-linecap="round"/>
+<line x1="1100" y1="640" x2="1100" y2="930" stroke="#FF6B35" stroke-width="2.2" stroke-dasharray="4 4" stroke-linecap="round"/>
+<line x1="1100" y1="930" x2="1000" y2="930" stroke="#FF6B35" stroke-width="2.2" stroke-dasharray="4 4" stroke-linecap="round"/>
+<rect x="980" y="870" width="230" height="100" rx="5" fill="#1B1F23" stroke="#9BA1A6" stroke-width="1.5"/>
+<text x="1095" y="898" font-size="12.5" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">เลือกใช้เส้นทางเดียว</text>
+<text x="1095" y="916" font-size="11.5" fill="#EDEDE5" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">ตามแรงดันโคมที่เลือก</text>
+<text x="1095" y="934" font-size="11" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">(5V หรือ 12V)</text>
+<circle cx="1095" cy="958" r="4" fill="#EDEDE5"/>
+<line x1="1095" y1="958" x2="1095" y2="980" stroke="#EDEDE5" stroke-width="3" stroke-linecap="round"/>
+<line x1="760" y1="780" x2="760" y2="1130" stroke="#5C6469" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="760" y1="1130" x2="1740" y2="1130" stroke="#5C6469" stroke-width="3" stroke-linecap="round"/>
+<text x="1700" y="1148" font-size="12.5" fill="#5C6469" text-anchor="end" font-weight="700" font-family="IBM Plex Mono">OUT −</text>
+<text x="760" y="990" font-size="15" fill="#2EC4B6" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">04 · เซนเซอร์แสง + สวิตช์อัตโนมัติ</text>
+<line x1="1095" y1="980" x2="1095" y2="1030" stroke="#EDEDE5" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1095" y1="1030" x2="830" y2="1030" stroke="#EDEDE5" stroke-width="2.5" stroke-linecap="round"/>
+<rect x="830" y="1000" width="260" height="100" rx="6" fill="#1B1F23" stroke="#2EC4B6" stroke-width="1.5"/>
+<text x="960.0" y="1024" font-size="13" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">Solar Light Controller</text>
+<text x="960.0" y="1042" font-size="10.5" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">(ชาร์จ+ป้องกัน+เปิดปิดตามแสงในตัว)</text>
+<polyline points="858.0,1072 867.0,1082 876.0,1062 885.0,1082 894.0,1062 903.0,1082 912.0,1072" fill="none" stroke="#2EC4B6" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="885" cy="1072" r="34" fill="none" stroke="#2EC4B6" stroke-width="1.5" stroke-dasharray="3 4"/>
+<line x1="875" y1="1042" x2="887" y2="1030" stroke="#2EC4B6" stroke-width="2"/>
+<polygon points="887,1030 879,1032 885,1038" fill="#2EC4B6"/>
+<line x1="893" y1="1042" x2="905" y2="1030" stroke="#2EC4B6" stroke-width="2"/>
+<polygon points="905,1030 897,1032 903,1038" fill="#2EC4B6"/>
+<circle cx="950" cy="1072" r="4" fill="#EDEDE5"/>
+<circle cx="995" cy="1072" r="4" fill="#EDEDE5"/>
+<line x1="950" y1="1072" x2="988.25" y2="1058" stroke="#EDEDE5" stroke-width="2.5" stroke-linecap="round"/>
+<text x="972" y="1095" font-size="9.5" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">มืด=ปิดวงจร / ต่อ</text>
+<line x1="830" y1="1030" x2="830" y2="1040" stroke="#EDEDE5" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="1090" y1="1050" x2="1140" y2="1050" stroke="#EDEDE5" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1098" y="1040" font-size="11.5" fill="#EDEDE5" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">OUT +</text>
+<text x="1150" y="990" font-size="15" fill="#F5B700" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">05 · โคมไฟ LED ทางเดิน</text>
+<line x1="1140" y1="1050" x2="1140" y2="1050" stroke="#EDEDE5" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1140" y1="1050" x2="1660" y2="1050" stroke="#EDEDE5" stroke-width="3" stroke-linecap="round"/>
+<text x="1700" y="1042" font-size="12.5" fill="#EDEDE5" text-anchor="end" font-weight="700" font-family="IBM Plex Mono">OUT +</text>
+<line x1="1200" y1="1050" x2="1200" y2="1095" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<g transform="rotate(90 1200 1120)">
+<line x1="1180.0" y1="1120" x2="1192" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1208" y1="1120" x2="1220.0" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="1192,1111 1192,1129 1208,1120" fill="#F5B700"/>
+<line x1="1208" y1="1110" x2="1208" y2="1130" stroke="#F5B700" stroke-width="3"/>
+<line x1="1202" y1="1106" x2="1213" y2="1095" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1213,1095 1206,1097 1211,1102" fill="#F5B700"/>
+<line x1="1210" y1="1112" x2="1221" y2="1101" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1221,1101 1214,1103 1219,1108" fill="#F5B700"/>
+</g>
+<line x1="1200" y1="1145" x2="1200" y2="1130" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="1200" cy="1130" r="3.5" fill="#5C6469"/>
+<line x1="1330" y1="1050" x2="1330" y2="1095" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<g transform="rotate(90 1330 1120)">
+<line x1="1310.0" y1="1120" x2="1322" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1338" y1="1120" x2="1350.0" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="1322,1111 1322,1129 1338,1120" fill="#F5B700"/>
+<line x1="1338" y1="1110" x2="1338" y2="1130" stroke="#F5B700" stroke-width="3"/>
+<line x1="1332" y1="1106" x2="1343" y2="1095" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1343,1095 1336,1097 1341,1102" fill="#F5B700"/>
+<line x1="1340" y1="1112" x2="1351" y2="1101" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1351,1101 1344,1103 1349,1108" fill="#F5B700"/>
+</g>
+<line x1="1330" y1="1145" x2="1330" y2="1130" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="1330" cy="1130" r="3.5" fill="#5C6469"/>
+<line x1="1460" y1="1050" x2="1460" y2="1095" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<g transform="rotate(90 1460 1120)">
+<line x1="1440.0" y1="1120" x2="1452" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1468" y1="1120" x2="1480.0" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="1452,1111 1452,1129 1468,1120" fill="#F5B700"/>
+<line x1="1468" y1="1110" x2="1468" y2="1130" stroke="#F5B700" stroke-width="3"/>
+<line x1="1462" y1="1106" x2="1473" y2="1095" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1473,1095 1466,1097 1471,1102" fill="#F5B700"/>
+<line x1="1470" y1="1112" x2="1481" y2="1101" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1481,1101 1474,1103 1479,1108" fill="#F5B700"/>
+</g>
+<line x1="1460" y1="1145" x2="1460" y2="1130" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="1460" cy="1130" r="3.5" fill="#5C6469"/>
+<line x1="1590" y1="1050" x2="1590" y2="1095" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<g transform="rotate(90 1590 1120)">
+<line x1="1570.0" y1="1120" x2="1582" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1598" y1="1120" x2="1610.0" y2="1120" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="1582,1111 1582,1129 1598,1120" fill="#F5B700"/>
+<line x1="1598" y1="1110" x2="1598" y2="1130" stroke="#F5B700" stroke-width="3"/>
+<line x1="1592" y1="1106" x2="1603" y2="1095" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1603,1095 1596,1097 1601,1102" fill="#F5B700"/>
+<line x1="1600" y1="1112" x2="1611" y2="1101" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1611,1101 1604,1103 1609,1108" fill="#F5B700"/>
+</g>
+<line x1="1590" y1="1145" x2="1590" y2="1130" stroke="#F5B700" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="1590" cy="1130" r="3.5" fill="#5C6469"/>
+<text x="1395.0" y="1190" font-size="12" fill="#9BA1A6" text-anchor="middle" font-weight="400" font-family="IBM Plex Mono">โคม LED IP65 × ตามจำนวนจุด</text>
+<rect x="1400" y="130" width="340" height="400" rx="8" fill="#1B1F23" stroke="#2A3136" stroke-width="1.5"/>
+<text x="1570.0" y="158" font-size="15" fill="#EDEDE5" text-anchor="middle" font-weight="700" font-family="Space Grotesk">สัญลักษณ์ในวงจร</text>
+<circle cx="1440" cy="194" r="15" fill="none" stroke="#F5B700" stroke-width="3"/>
+<text x="1440" y="200" font-size="20" fill="#F5B700" text-anchor="middle" font-weight="700" font-family="Space Grotesk">M</text>
+<text x="1480" y="199" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">มอเตอร์ (ทำหน้าที่เจนเนอเรเตอร์)</text>
+<line x1="1423.0" y1="242" x2="1432" y2="242" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1448" y1="242" x2="1457.0" y2="242" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="1432,233 1432,251 1448,242" fill="#FF6B35"/>
+<line x1="1448" y1="232" x2="1448" y2="252" stroke="#FF6B35" stroke-width="3"/>
+<text x="1480" y="247" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">ไดโอด 1N4007</text>
+<line x1="1440" y1="270.0" x2="1440" y2="286.0" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1440" y1="294.0" x2="1440" y2="310.0" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1424" y1="286.0" x2="1456" y2="286.0" stroke="#2EC4B6" stroke-width="3.5"/>
+<path d="M 1424 294.0 Q 1440 304.0 1456 294.0" stroke="#2EC4B6" stroke-width="3.5" fill="none"/>
+<text x="1462" y="290.0" font-size="16" fill="#2EC4B6" text-anchor="start" font-weight="600" font-family="IBM Plex Mono">+</text>
+<text x="1480" y="295" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">ตัวเก็บประจุ (electrolytic)</text>
+<line x1="1428.0" y1="314" x2="1428.0" y2="362" stroke="#F5B700" stroke-width="4"/>
+<line x1="1440.0" y1="325" x2="1440.0" y2="351" stroke="#F5B700" stroke-width="7"/>
+<text x="1480" y="343" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">แบตเตอรี่ Li-ion/LiFePO4</text>
+<g transform="rotate(0 1440 386)">
+<line x1="1420.0" y1="386" x2="1432" y2="386" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="1448" y1="386" x2="1460.0" y2="386" stroke="#F5B700" stroke-width="2.5" stroke-linecap="round"/>
+<polygon points="1432,377 1432,395 1448,386" fill="#F5B700"/>
+<line x1="1448" y1="376" x2="1448" y2="396" stroke="#F5B700" stroke-width="3"/>
+<line x1="1442" y1="372" x2="1453" y2="361" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1453,361 1446,363 1451,368" fill="#F5B700"/>
+<line x1="1450" y1="378" x2="1461" y2="367" stroke="#F5B700" stroke-width="2"/>
+<polygon points="1461,367 1454,369 1459,374" fill="#F5B700"/>
+</g>
+<text x="1480" y="391" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">LED</text>
+<polyline points="1413.0,434 1422.0,444 1431.0,424 1440.0,444 1449.0,424 1458.0,444 1467.0,434" fill="none" stroke="#2EC4B6" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="1440" cy="434" r="34" fill="none" stroke="#2EC4B6" stroke-width="1.5" stroke-dasharray="3 4"/>
+<line x1="1430" y1="404" x2="1442" y2="392" stroke="#2EC4B6" stroke-width="2"/>
+<polygon points="1442,392 1434,394 1440,400" fill="#2EC4B6"/>
+<line x1="1448" y1="404" x2="1460" y2="392" stroke="#2EC4B6" stroke-width="2"/>
+<polygon points="1460,392 1452,394 1458,400" fill="#2EC4B6"/>
+<text x="1480" y="439" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">ตัวต้านทานแปรผันแสง (LDR)</text>
+<circle cx="1424" cy="482" r="4" fill="#EDEDE5"/>
+<circle cx="1456" cy="482" r="4" fill="#EDEDE5"/>
+<line x1="1424" y1="482" x2="1451.2" y2="468" stroke="#EDEDE5" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1480" y="487" font-size="12" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">สวิตช์ (ควบคุมโดย LDR)</text>
+<text x="1570.0" y="472" font-size="13" fill="#EDEDE5" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono">เส้นสี</text>
+<line x1="1440" y1="492" x2="1470" y2="492" stroke="#FF6B35" stroke-width="3" stroke-linecap="round"/>
+<text x="1480" y="496" font-size="11.5" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">สาย + (บวก)</text>
+<line x1="1440" y1="514" x2="1470" y2="514" stroke="#5C6469" stroke-width="3" stroke-linecap="round"/>
+<text x="1480" y="518" font-size="11.5" fill="#9BA1A6" text-anchor="start" font-weight="400" font-family="IBM Plex Mono">สาย − (ลบ/กราวด์)</text>
+</svg>
+    </div>
+  </div>
+</section>
+
+<section id="weather">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">05</span><h2>การออกแบบให้ทนแดดและฝน</h2></div>
+    <p class="section-sub">จุดที่ทำให้อุปกรณ์ไฟฟ้ากลางแจ้งเสียหายบ่อยที่สุดคือความชื้นซึมเข้าวงจร และวัสดุพลาสติกกรอบเปราะจากรังสี UV — ออกแบบแก้ทั้งสองจุดตั้งแต่ต้น</p>
+
+    <div class="weather-band">
+      <h3>☀ 🌧 หลักการกันแดดกันฝน</h3>
+      <div class="weather-grid">
+        <div class="weather-item"><span class="k">ผิวสัมผัสบนสุด</span><span class="v">ใช้ยาง EPDM หรือยางกันลื่นทนโอโซน/รังสี UV โดยเฉพาะ ไม่ใช้พลาสติกทั่วไปที่กรอบแตกเมื่อโดนแดดนาน</span></div>
+        <div class="weather-item"><span class="k">รอยต่อทุกจุด</span><span class="v">ซีลด้วยยางกันน้ำ (gasket) ร่วมกับกาวซิลิโคน ไม่ใช้กาวชนิดเดียวรับภาระทั้งหมด</span></div>
+        <div class="weather-item"><span class="k">วงจรอิเล็กทรอนิกส์</span><span class="v">พ่นเคลือบกันความชื้น (conformal coating) หลังบัดกรีเสร็จ ก่อนปิดกล่อง</span></div>
+        <div class="weather-item"><span class="k">จุดสายไฟทะลุกล่อง</span><span class="v">ใช้ข้อต่อกันน้ำ (cable gland) แทนการเจาะรูเปล่าแล้วอุดกาว</span></div>
+        <div class="weather-item"><span class="k">ระบายน้ำสะสม</span><span class="v">เจาะรูระบายเล็กๆ ที่มุมต่ำสุดของกล่อง กันน้ำขังกรณีซีลรั่วเล็กน้อย</span></div>
+        <div class="weather-item"><span class="k">โลหะที่ใช้</span><span class="v">น็อต สกรู แกนต่างๆ เลือกสแตนเลสหรือชุบกันสนิม ไม่ใช้เหล็กเปลือย</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="model3d">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">06</span><h2>โมเดล 3 มิติ แบบหมุนดูได้</h2></div>
+    <p class="section-sub">โมเดลจำลองโครงสร้างภายในของแผ่นพื้นหนึ่งแผ่น ลากเมาส์เพื่อหมุนดูรอบด้าน กดปุ่มเพื่อแยกชิ้นส่วนดูตำแหน่งประกอบ หรือจำลองจังหวะเหยียบ</p>
+
+    <div class="viewer-card">
+      <div class="viewer-topbar">
+        <span class="label">FIG.02 — INTERACTIVE 3D · 1 TILE MODULE</span>
+        <span class="label" id="fpsIndicator">●</span>
+      </div>
+      <div class="viewer-stage">
+        <canvas id="viewer3d"></canvas>
+        <svg id="leaderSvg" class="leader-svg"></svg>
+        <div id="labelLayer" class="label-layer"></div>
+      </div>
+      <div class="viewer-hint">ลากเพื่อหมุน · scroll เพื่อซูม · แยกชิ้นส่วนเพื่อดูป้ายชื่อแต่ละชิ้น</div>
+      <div class="viewer-controls">
+        <button class="vbtn primary" onclick="togglExplode()" id="explodeBtn">แยกชิ้นส่วน</button>
+        <button class="vbtn" onclick="simulatePress3d()">จำลองการเหยียบ</button>
+        <button class="vbtn" onclick="resetView()">รีเซ็ตมุมมอง</button>
+      </div>
+      <div class="legend3d">
+        <div class="legend-item"><span class="legend-swatch" style="background:#EDEDE5"></span>แผ่นบน (ยางกันลื่น)</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#9BA1A6"></span>สปริงกด</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#FF6B35"></span>แร็คแอนด์พีเนียน</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#F5B700"></span>มอเตอร์ไฟฟ้า</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#2EC4B6"></span>บอร์ดวงจร</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#2A3136"></span>กล่องฐานกันน้ำ</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sourcing">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">07</span><h2>แหล่งซื้อวัสดุและอุปกรณ์</h2></div>
+    <p class="section-sub">รวมร้านค้า/ซัพพลายเออร์ในไทยที่หาซื้อได้จริงต่อกลุ่มวัสดุ ราคาและสต๊อกควรเช็กหน้าร้านอีกครั้งก่อนสั่งซื้อจริง เพราะเปลี่ยนแปลงได้ตลอดเวลา</p>
+
+    <div class="group-title">🏗 โครงสร้างภายนอก (ยาง / อะคริลิก / กันน้ำ)</div>
+    <table>
+      <tr><th>รายการ</th><th>แหล่งซื้อแนะนำ</th></tr>
+      <tr>
+        <td>แผ่นยางกันลื่น / EPDM</td>
+        <td>
+          <a class="src-link" href="https://www.thaiwatsadu.com/th/category/%E0%B8%9E%E0%B8%A3%E0%B8%A1%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A5%E0%B8%B7%E0%B9%88%E0%B8%99-570402" target="_blank" rel="noopener">ไทวัสดุ — พรม/แผ่นยางกันลื่น</a>,
+          <a class="src-link" href="https://www.homepro.co.th/search?q=%E0%B9%81%E0%B8%9C%E0%B9%88%E0%B8%99%E0%B8%A2%E0%B8%B2%E0%B8%87%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%A5%E0%B8%B7%E0%B9%88%E0%B8%99" target="_blank" rel="noopener">โฮมโปร</a>,
+          <a class="src-link" href="https://www.evarubberthai.com/" target="_blank" rel="noopener">ร้านยุวดีแผ่นยาง (ตัดตามไดคัท)</a>
+          <span class="src-note">เลือกรุ่น EPDM ทนโอโซน/UV โดยเฉพาะ ไม่ใช่ยาง PVC ธรรมดา</span>
+        </td>
+      </tr>
+      <tr>
+        <td>แผ่นอะคริลิก / ABS สำหรับกล่องฐาน</td>
+        <td>
+          <a class="src-link" href="https://www.gointerrich.com/" target="_blank" rel="noopener">โกอินเตอร์ริช (ตัดเลเซอร์/CNC ตามแบบ)</a>,
+          <a class="src-link" href="https://spvcplastic.com/" target="_blank" rel="noopener">เอส พี วี ซี พลาสติก</a>
+          <span class="src-note">แจ้งขนาดกล่องให้ร้านตัดสำเร็จมา ประหยัดเวลากว่าซื้อแผ่นใหญ่มาตัดเอง</span>
+        </td>
+      </tr>
+      <tr>
+        <td>เคเบิ้ลแกลนด์กันน้ำ (จุดสายไฟทะลุกล่อง)</td>
+        <td>
+          <a class="src-link" href="https://www.spebanmoh-online.com/category/102/" target="_blank" rel="noopener">เอสพีอี บ้านหม้อ</a>,
+          <a class="src-link" href="https://www.lazada.co.th/tag/cable-gland/" target="_blank" rel="noopener">Lazada / Shopee</a>
+        </td>
+      </tr>
+      <tr>
+        <td>กาวซิลิโคนกันน้ำ, น็อตสแตนเลส</td>
+        <td>ไทวัสดุ, โฮมโปร, ร้านฮาร์ดแวร์ทั่วไป <span class="src-note">เลือกซิลิโคนชนิด outdoor/กันเชื้อรา</span></td>
+      </tr>
+    </table>
+
+    <div class="group-title">⚙ กลไกกำเนิดไฟฟ้า</div>
+    <table>
+      <tr><th>รายการ</th><th>แหล่งซื้อแนะนำ</th></tr>
+      <tr>
+        <td>มอเตอร์เกียร์ DC (ใช้เป็นเครื่องกำเนิดไฟฟ้า)</td>
+        <td>
+          <a class="src-link" href="https://www.modulemore.com/" target="_blank" rel="noopener">Modulemore</a>,
+          <a class="src-link" href="https://www.nattakit.com/" target="_blank" rel="noopener">Nattakit</a>,
+          <a class="src-link" href="https://www.basic-robot.com/" target="_blank" rel="noopener">Basic Robot</a>,
+          <a class="src-link" href="https://www.ortech-online.com/" target="_blank" rel="noopener">O.R. Technology</a>
+          <span class="src-note">รุ่น N20 หรือ JGA25-370 12V เหมาะกับขนาดกล่องเล็ก ทอร์กพอสำหรับแรงเหยียบ</span>
+        </td>
+      </tr>
+      <tr>
+        <td>ชุดเฟืองแร็คแอนด์พีเนียน</td>
+        <td>
+          <a class="src-link" href="https://th.misumi-ec.com/" target="_blank" rel="noopener">MISUMI ประเทศไทย</a>,
+          <a class="src-link" href="https://th.rs-online.com/" target="_blank" rel="noopener">RS Thailand</a>
+          <span class="src-note">สั่งตามสเปกโมดูล ให้ตรงกับขนาดเฟืองพีเนียนที่จะสวมเข้าแกนมอเตอร์</span>
+        </td>
+      </tr>
+      <tr>
+        <td>สปริงอัด (compression spring) แบบสั่งขนาด</td>
+        <td>
+          <a class="src-link" href="https://tshspringworld.com/" target="_blank" rel="noopener">TSH Spring World</a>,
+          <a class="src-link" href="https://www.thaveechaispring.com/" target="_blank" rel="noopener">ทวีชัยสปริง</a>,
+          <a class="src-link" href="https://th.rs-online.com/" target="_blank" rel="noopener">RS Thailand</a>
+          <span class="src-note">แจ้งระยะยุบตัวที่ต้องการ (5–15 มม.) กับน้ำหนักที่รับ ร้านช่วยคำนวณสปริงให้ได้</span>
+        </td>
+      </tr>
+    </table>
+
+    <div class="group-title">🔌 วงจรไฟฟ้า</div>
+    <table>
+      <tr><th>รายการ</th><th>แหล่งซื้อแนะนำ</th></tr>
+      <tr>
+        <td>ไดโอด 1N4007, โมดูลชาร์จ TP4056, บอร์ดบูสต์คอนเวอร์เตอร์, LED</td>
+        <td>
+          <a class="src-link" href="https://www.modulemore.com/" target="_blank" rel="noopener">Modulemore</a>,
+          <a class="src-link" href="https://www.cybertice.com/" target="_blank" rel="noopener">Cybertice</a>,
+          <a class="src-link" href="https://www.arduitronics.com/" target="_blank" rel="noopener">Arduitronics</a>,
+          <a class="src-link" href="https://shopee.co.th/" target="_blank" rel="noopener">Shopee</a> / <a class="src-link" href="https://www.lazada.co.th/" target="_blank" rel="noopener">Lazada</a>
+          <span class="src-note">ร้านแถวบ้านหม้อ (กรุงเทพฯ) และ IC ทาวเวอร์ก็มีของกลุ่มนี้ครบ เหมาะซื้อด่วนไม่ต้องรอส่ง</span>
+        </td>
+      </tr>
+      <tr>
+        <td>ตัวเก็บประจุ, แบตเตอรี่ลิเธียม, สายไฟหุ้มฉนวนกันน้ำ</td>
+        <td>ร้านอิเล็กทรอนิกส์ทั่วไป, Shopee/Lazada <span class="src-note">เลือกแบตที่มีวงจรป้องกันในตัว (protected cell) เพื่อความปลอดภัย</span></td>
+      </tr>
+    </table>
+
+    <div class="callout" style="margin-top:26px;">
+      <b>คำแนะนำก่อนสั่งซื้อ:</b> ให้ประกอบวงจรบนเบรดบอร์ดทดสอบก่อนสั่งชิ้นส่วนกลไกจำนวนมาก เพื่อยืนยันว่ามอเตอร์รุ่นที่เลือกให้แรงดันเพียงพอ แล้วค่อยสั่งเฟืองแร็คแอนด์พีเนียนและสปริงตามขนาดจริงของกล่องที่ตัดไว้
+    </div>
+  </div>
+</section>
+
+<section id="lighting">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">08</span><h2>ต่อยอด — เลี้ยงไฟทางเดิน</h2></div>
+    <p class="section-sub">แทนที่จะใช้แผ่นเดียวจุด LED ดวงเดียว ให้วางแผ่นเรียงเป็นแนวตามทางเดิน รวมไฟจากทุกแผ่นเข้าจุดเดียว แล้วค่อยจ่ายออกไปเลี้ยงโคมไฟทางเดินตอนกลางคืน</p>
+
+    <div class="flow">
+      <div class="flow-box"><div class="ft">01 · แผ่นเหยียบ ×N</div><div class="fs">วางเรียงตามแนวทางเดิน ต่อขนานกันเป็นโซน</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="ft">02 · กล่องรวมสาย + เรียงกระแส</div><div class="fs">รวมพัลส์จากทุกแผ่น กันย้อนกลับด้วยไดโอด</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="ft">03 · ตัวควบคุมการชาร์จ</div><div class="fs">คุมไม่ให้ชาร์จเกิน ป้องกันแบตเสีย</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="ft">04 · แบงก์แบตเตอรี่</div><div class="fs">เก็บพลังงานสะสมไว้ใช้ตอนกลางคืน</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="ft">05 · โคมไฟทางเดิน LED</div><div class="fs">เปิดอัตโนมัติเมื่อมืด ผ่านเซนเซอร์แสง (LDR)</div></div>
+    </div>
+
+    <div class="group-title" style="margin-top:34px;">🧩 อุปกรณ์ที่เพิ่มจากชุดเดิม</div>
+    <table>
+      <tr><th>รายการ</th><th>หน้าที่</th></tr>
+      <tr><td>สายไฟเมนรวม + กล่องต่อสายกันน้ำ (junction box IP65)</td><td>รวมสายจากแผ่นทุกจุดมาที่เดียวก่อนเข้าวงจรควบคุม</td></tr>
+      <tr><td>ตัวควบคุมการชาร์จ (charge controller) ขนาดเล็ก</td><td>ป้องกันแบตเตอรี่ชาร์จเกิน/คายประจุลึกเกินไป ยืดอายุแบต</td></tr>
+      <tr><td>แบงก์แบตเตอรี่ (เช่น แบต LiFePO4 หรือ 18650 ต่อชุด)</td><td>เก็บพลังงานสะสมทั้งวันไว้จ่ายตอนกลางคืน</td></tr>
+      <tr><td>เซนเซอร์แสง LDR + วงจรสวิตช์อัตโนมัติ</td><td>สั่งเปิดไฟเมื่อมืด ปิดเมื่อสว่าง ประหยัดพลังงานสะสม</td></tr>
+      <tr><td>โคมไฟ LED ทางเดิน แบบกันน้ำ IP65 ขึ้นไป</td><td>ให้แสงสว่างจริงตามจุดที่ต้องการ</td></tr>
+    </table>
+
+    <div class="group-title" style="margin-top:34px;">🔋 ออกแบบชุดเก็บพลังงานสำหรับใช้กลางคืน</div>
+    <p class="section-sub" style="margin-bottom:16px;">หัวใจของระบบคือแบตเตอรี่ต้องรับพลังงานที่ได้มาแบบพัลส์ไม่สม่ำเสมอตลอดวัน แล้วปล่อยออกมาสม่ำเสมอตอนกลางคืน ต้องมีทั้งวงจรป้องกันและวงจรตัดเปิด-ปิดอัตโนมัติ</p>
+
+    <table>
+      <tr><th>ชนิดแบตเตอรี่</th><th>ข้อดี</th><th>ข้อควรระวัง</th></tr>
+      <tr><td class="qty">ตะกั่วกรด (Lead-acid / AGM)</td><td>ราคาถูก หาซื้อง่าย ทนกระแสชาร์จต่ำๆ ได้ดี</td><td>หนัก อายุการใช้งานสั้นกว่าถ้าคายประจุลึกบ่อย</td></tr>
+      <tr><td class="qty">Li-ion 18650 ต่อชุด</td><td>เบา จุพลังงานต่อขนาดสูง</td><td>ต้องมี BMS ป้องกันไฟเกิน/ลัดวงจรเสมอ ไวต่อความร้อน</td></tr>
+      <tr><td class="qty">LiFePO4</td><td>ปลอดภัยสูง ทนรอบชาร์จ-คายประจุได้มาก เหมาะงานกลางแจ้งระยะยาว</td><td>ราคาต่อหน่วยพลังงานสูงกว่า Li-ion ทั่วไป</td></tr>
+    </table>
+
+    <div class="callout" style="margin-top:20px;">
+      <b>แนวทางประเมินขนาดแบตเตอรี่ (คร่าวๆ เพื่อเริ่มออกแบบ):</b><br>
+      พลังงานที่ต้องใช้ต่อคืน (วัตต์-ชั่วโมง) = จำนวนโคมไฟ × กำลังไฟต่อดวง (วัตต์) × จำนวนชั่วโมงที่ต้องการเปิด<br>
+      เช่น โคมไฟ LED 2 วัตต์ จำนวน 5 ดวง เปิด 8 ชั่วโมง/คืน ต้องใช้พลังงานประมาณ 2×5×8 = 80 วัตต์-ชั่วโมง จึงควรเลือกแบตที่จุพลังงานได้มากกว่านี้พอสมควร (เผื่อ 1.5–2 เท่า) เพราะพลังงานที่เก็บได้จริงจากการเหยียบแต่ละวันไม่แน่นอน ตัวเลขนี้เป็นแค่จุดเริ่มคำนวณ ควรวัดพลังงานจริงจากต้นแบบก่อนตัดสินใจซื้อแบตชุดใหญ่
+    </div>
+
+    <div class="group-title" style="margin-top:28px;">⚡ วงจรจัดการพลังงานสามชั้น</div>
+    <div class="flow">
+      <div class="flow-box"><div class="ft">ชั้น 1 · ป้องกันการชาร์จ</div><div class="fs">ตัวควบคุมการชาร์จ (charge controller) ตัดเมื่อแบตเต็ม กันไฟย้อนตอนไม่มีการเหยียบ</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="ft">ชั้น 2 · ป้องกันตัวแบต</div><div class="fs">BMS หรือวงจรป้องกัน ตัดเมื่อแรงดันต่ำเกินไปหรือกระแสเกิน</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="ft">ชั้น 3 · ควบคุมการจ่ายออก</div><div class="fs">เซนเซอร์ LDR สั่งเปิดวงจรจ่ายไฟให้โคมเมื่อมืด และตัดจ่ายอัตโนมัติเมื่อแบตใกล้หมดเพื่อกันแบตเสีย</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:22px;">
+      <b>ทางลัดที่ใช้งานได้จริง:</b> ไม่จำเป็นต้องประกอบวงจรเซนเซอร์แสงเองทั้งหมด มีโมดูล "solar light controller" สำเร็จรูปขายอยู่แล้ว (ทำหน้าที่ครบทั้งชาร์จ ป้องกันแบต และเปิด-ปิดตามแสง) ใช้กับแหล่งพลังงานจากแผ่นเหยียบแทนแผงโซลาร์ได้เลย เพียงต่อขั้วชาร์จเข้ากับเอาต์พุตของบอร์ดเรียงกระแสจากแผ่นเหยียบแทน
+    </div>
+
+    <div class="callout" style="margin-top:18px;">
+      <b>ข้อเท็จจริงที่ต้องคำนึงถึง:</b> พลังงานจากการเหยียบมีจังหวะไม่สม่ำเสมอ ขึ้นกับปริมาณคนเดินจริง ถ้าทางเดินมีคนพลุกพล่านตลอดวันก็พอสะสมไฟใช้ตอนกลางคืนได้ แต่ถ้าคนเดินน้อย พลังงานอาจไม่พอเลี้ยงไฟตลอดคืน ทางที่ปลอดภัยกว่าคือทำเป็น <b>ระบบไฮบริด</b> เสริมแผงโซลาร์เซลล์ขนาดเล็กเข้าไปในแบงก์แบตเตอรี่เดียวกัน ให้พลังงานเหยียบเป็นตัวเสริม ไม่ใช่แหล่งหลักเพียงอย่างเดียว
+    </div>
+  </div>
+</section>
+
+<section id="vehicle">
+  <div class="wrap">
+    <div class="section-head"><span class="idx">09</span><h2>ขยายสเกลสู่ถนนสำหรับรถ</h2></div>
+    <p class="section-sub">แนวคิดนี้มีอยู่จริงในงานวิจัย เรียกว่า Speed Bump Electricity Generator (SBEG) ใช้หลักการเดียวกับแผ่นเหยียบ แต่ต้องยกระดับวัสดุและกลไกทั้งหมดให้รับน้ำหนักรถได้ ซึ่งมากกว่าแรงเหยียบคนหลายร้อยเท่า</p>
+
+    <table>
+      <tr><th></th><th>แผ่นเหยียบคนเดิน</th><th>ลูกระนาดผลิตไฟสำหรับรถ</th></tr>
+      <tr><td class="qty">แรงกดต่อครั้ง</td><td>~500–900 นิวตัน (น้ำหนักคน)</td><td>หลายพันถึงหลายหมื่นนิวตันต่อเพลา</td></tr>
+      <tr><td class="qty">กลไก</td><td>แร็คแอนด์พีเนียน + มอเตอร์เกียร์เล็ก</td><td>กระบอกไฮดรอลิก + แอคคูมูเลเตอร์ + มอเตอร์ไฮดรอลิกขับเจนเนอเรเตอร์ (หรือแร็คแอนด์พีเนียนเหล็กหนักขับเจนเนอเรเตอร์ผ่านเกียร์ทด)</td></tr>
+      <tr><td class="qty">โครงสร้างภายนอก</td><td>อะคริลิก/ABS + ยาง EPDM</td><td>ฝาครอบเหล็กกล้า/เหล็กหล่อ รับน้ำหนักตามมาตรฐานถนน พร้อมรอยต่อลาดเอียงแบบลูกระนาดมาตรฐาน</td></tr>
+      <tr><td class="qty">กำลังไฟฟ้าที่ได้</td><td>ระดับ mA จุด LED เดี่ยว</td><td>งานวิจัยรายงานตั้งแต่หลักร้อยวัตต์ถึงระดับกิโลวัตต์ต่อจุด ขึ้นกับปริมาณและน้ำหนักรถที่ผ่าน</td></tr>
+    </table>
+
+    <div class="group-title" style="margin-top:30px;">⚙ อุปกรณ์ระดับอุตสาหกรรมที่ต้องเพิ่ม</div>
+    <table>
+      <tr><th>รายการ</th><th>หน้าที่</th></tr>
+      <tr><td>ฝาครอบลูกระนาดเหล็กกล้ารับน้ำหนักตามมาตรฐานถนน</td><td>รับแรงกดจากล้อรถซ้ำๆ นับหมื่นรอบโดยไม่ล้า</td></tr>
+      <tr><td>กระบอกไฮดรอลิก (hydraulic cylinder) คู่</td><td>แปลงแรงกดจากล้อรถเป็นแรงดันน้ำมันไฮดรอลิก</td></tr>
+      <tr><td>แอคคูมูเลเตอร์ไฮดรอลิก (hydraulic accumulator)</td><td>กักเก็บแรงดันน้ำมันสะสม ทำให้จ่ายพลังงานต่อเนื่องแทนที่จะเป็นแค่พัลส์สั้นๆ</td></tr>
+      <tr><td>มอเตอร์ไฮดรอลิก + เจนเนอเรเตอร์ไฟฟ้ากำลังสูง</td><td>แปลงแรงดันน้ำมันเป็นการหมุนเพื่อผลิตไฟฟ้า</td></tr>
+      <tr><td>สปริงคืนตัวขนาดใหญ่ (heavy-duty return spring)</td><td>ดันลูกระนาดกลับตำแหน่งเดิมหลังรถผ่านแต่ละคัน</td></tr>
+      <tr><td>ตู้ควบคุม/อินเวอร์เตอร์ระดับถนน</td><td>แปลงไฟที่ได้ให้เหมาะกับการเลี้ยงไฟถนน/สัญญาณไฟจราจรจริง</td></tr>
+    </table>
+
+    <div class="danger-band" style="margin-top:28px;">
+      <h3>⚠ ข้อควรพิจารณาก่อนขยับจากโมเดลสาธิตไปติดตั้งจริงบนถนน</h3>
+      <ul>
+        <li>การติดตั้งบนถนนสาธารณะเกี่ยวข้องกับความปลอดภัยของผู้ใช้รถใช้ถนนโดยตรง จำเป็นต้องผ่านการรับรองจากวิศวกรโครงสร้าง/วิศวกรจราจรที่มีใบอนุญาต ไม่ใช่งานที่ทำเองได้แบบโครงงานในโรงเรียน</li>
+        <li>ต้องประสานหน่วยงานที่ดูแลถนนเส้นนั้น (เทศบาล กรมทางหลวงชนบท หรือกรมทางหลวง แล้วแต่ประเภทถนน) เรื่องมาตรฐานความสูง-ความลาดของลูกระนาด และการทดสอบรับน้ำหนัก</li>
+        <li>ต้องมีแผนบำรุงรักษาและตรวจสอบระบบไฮดรอลิกเป็นระยะ เพราะเป็นชิ้นส่วนที่รับภาระหนักซ้ำๆ ทุกวัน</li>
+        <li>แนวทางที่ทำได้จริงในระดับโรงเรียน/การประกวด คือสร้าง <b>โมเดลจำลองย่อส่วน</b> (เช่น ใช้รถของเล่นหรือจักรยานวิ่งผ่านแทนรถจริง) เพื่อสาธิตหลักการทำงานให้เห็นภาพ ส่วนการติดตั้งขนาดจริงบนถนนควรเป็นโครงการระยะถัดไปที่ทำร่วมกับวิศวกรหรือหน่วยงานท้องถิ่น</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">FIELD-READY KINETIC TILE MODULE — DEMONSTRATION SCALE PROJECT</div>
+</footer>
+
+<script>
+function pressAnim(){
+  const top = document.getElementById('layerTop');
+  const mech = document.getElementById('layerMech');
+  const spring = document.getElementById('layerSpring');
+  const led = document.getElementById('ledDot');
+
+  top.style.transition = 'transform 0.25s ease';
+  mech.style.transition = 'transform 0.25s ease';
+  top.style.transform = 'translateY(45px)';
+  mech.style.transform = 'translateY(20px)';
+
+  led.setAttribute('fill', '#F5B700');
+  led.style.transition = 'fill 0.1s';
+  led.setAttribute('r', '12');
+
+  setTimeout(()=>{
+    top.style.transform = 'translateY(0)';
+    mech.style.transform = 'translateY(0)';
+  }, 550);
+
+  setTimeout(()=>{
+    led.setAttribute('fill', '#333');
+    led.setAttribute('r', '9');
+  }, 1400);
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const canvas = document.getElementById('viewer3d');
+  if(!canvas || !window.THREE) return;
+
+  let width = canvas.clientWidth, height = 460;
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(width, height, false);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, width/height, 0.1, 100);
+  camera.position.set(7, 6, 9);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9);
+  key.position.set(6,10,6);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xF5B700, 0.35);
+  rim.position.set(-6,4,-6);
+  scene.add(rim);
+
+  const rig = new THREE.Group();
+  scene.add(rig);
+
+  // ---- materials ----
+  const matTop = new THREE.MeshStandardMaterial({color:0xEDEDE5, roughness:0.7});
+  const matBase = new THREE.MeshStandardMaterial({color:0x2A3136, roughness:0.8});
+  const matAmber = new THREE.MeshStandardMaterial({color:0xF5B700, roughness:0.4, metalness:0.2});
+  const matOrange = new THREE.MeshStandardMaterial({color:0xFF6B35, roughness:0.5});
+  const matTeal = new THREE.MeshStandardMaterial({color:0x2EC4B6, roughness:0.5});
+  const matSpring = new THREE.MeshStandardMaterial({color:0x9BA1A6, roughness:0.35, metalness:0.6});
+
+  // ---- base box ----
+  const base = new THREE.Mesh(new THREE.BoxGeometry(6.4,0.9,6.4), matBase);
+  base.position.y = 0;
+  rig.add(base);
+
+  // ---- circuit board (center, on base) ----
+  const board = new THREE.Mesh(new THREE.BoxGeometry(2.4,0.15,1.6), matTeal);
+  board.position.set(0, 0.55, 0);
+  rig.add(board);
+  // small chips on board
+  const chipColors = [0x2A3136, 0xF5B700, 0xFF6B35];
+  for(let i=0;i<3;i++){
+    const chip = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.12,0.4), new THREE.MeshStandardMaterial({color:chipColors[i]}));
+    chip.position.set(-0.7 + i*0.7, 0.68, 0);
+    rig.add(chip);
+  }
+
+  // spring curve class
+  class HelixCurve extends THREE.Curve{
+    constructor(r, h, turns){ super(); this.r=r; this.h=h; this.turns=turns; }
+    getPoint(t){
+      const angle = t * Math.PI*2*this.turns;
+      return new THREE.Vector3(Math.cos(angle)*this.r, t*this.h, Math.sin(angle)*this.r);
+    }
+  }
+
+  // ---- 4 corners: springs+guides at all 4, but motor+pinion+rack only at 2 diagonal corners ----
+  const corners = [[2.4,2.4],[-2.4,2.4],[2.4,-2.4],[-2.4,-2.4]];
+  const motorCorners = new Set(['2.4,2.4', '-2.4,-2.4']); // diagonal pair
+  const motors = [], racks = [], springs = [], pinions = [], guidePosts = [];
+  const baseTopY = 0.45;
+
+  corners.forEach(([x,z])=>{
+    const hasMotor = motorCorners.has(`${x},${z}`);
+
+    if(hasMotor){
+      // motor
+      const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.7,20), matAmber);
+      motor.rotation.z = Math.PI/2;
+      motor.position.set(x, baseTopY+0.35, z);
+      rig.add(motor);
+      motors.push(motor);
+
+      // pinion (gear disc)
+      const pinion = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.12,12), matOrange);
+      pinion.position.set(x, baseTopY+0.75, z);
+      rig.add(pinion);
+      pinions.push(pinion);
+
+      // rack (vertical bar riding the pinion)
+      const rack = new THREE.Mesh(new THREE.BoxGeometry(0.22,1.6,0.22), matOrange);
+      rack.position.set(x, baseTopY+1.4, z);
+      rig.add(rack);
+      racks.push(rack);
+    } else {
+      // plain guide post — structural support only, no generation
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,1.6,14), new THREE.MeshStandardMaterial({color:0x5C6469, metalness:0.4, roughness:0.5}));
+      post.position.set(x, baseTopY+0.75, z);
+      rig.add(post);
+      guidePosts.push(post);
+    }
+
+    // spring — present at all 4 corners for even support
+    const curve = new HelixCurve(0.28, 1.7, 6);
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, 0.045, 8, false), matSpring);
+    tube.position.set(x, baseTopY, z);
+    rig.add(tube);
+    springs.push(tube);
+  });
+
+  // ---- top plate ----
+  const topPlate = new THREE.Mesh(new THREE.BoxGeometry(6.1,0.35,6.1), matTop);
+  topPlate.position.set(0, baseTopY+2.15, 0);
+  rig.add(topPlate);
+
+  // subtle grip grooves on top plate
+  for(let i=-2;i<=2;i++){
+    const groove = new THREE.Mesh(new THREE.BoxGeometry(5.6,0.04,0.08), new THREE.MeshStandardMaterial({color:0xC9C6BC}));
+    groove.position.set(0, baseTopY+2.34, i*1.1);
+    rig.add(groove);
+  }
+
+  // ---- LED ----
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.14,16,16), new THREE.MeshStandardMaterial({color:0x333333, emissive:0x000000}));
+  led.position.set(2.7, 0.75, 2.9);
+  rig.add(led);
+
+  // ---- group references for explode/assemble ----
+  const assembledY = {
+    topPlate: baseTopY+2.15,
+    racks: baseTopY+1.4,
+    pinions: baseTopY+0.75,
+    motors: baseTopY+0.35,
+    springs: baseTopY,
+    board: 0.55
+  };
+  const explodedOffset = {
+    topPlate: 1.9, racks: 1.1, pinions: 0.55, motors: 0.15, springs: -0.1, board: -0.35
+  };
+
+  let explodeAmt = 0; // 0 = assembled, 1 = fully exploded
+  let explodeTarget = 0;
+  let pressAmt = 0; // 0..1 press animation
+  let gearSpin = 0;
+  let autoRotate = true;
+  let dragging = false, lastX=0, lastY=0;
+  let rotY = 0.5, rotX = -0.18;
+
+  function layout(){
+    topPlate.position.y = assembledY.topPlate + explodedOffset.topPlate*explodeAmt - pressAmt*0.55;
+    racks.forEach(r=> r.position.y = assembledY.racks + explodedOffset.racks*explodeAmt - pressAmt*0.55*0.6);
+    pinions.forEach(p=> p.position.y = assembledY.pinions + explodedOffset.pinions*explodeAmt);
+    motors.forEach(m=> m.position.y = assembledY.motors + explodedOffset.motors*explodeAmt);
+    springs.forEach(s=> s.position.y = assembledY.springs + explodedOffset.springs*explodeAmt - pressAmt*0.12);
+    board.position.y = assembledY.board + explodedOffset.board*explodeAmt;
+  }
+
+  window.togglExplode = function(){
+    explodeTarget = explodeTarget === 0 ? 1 : 0;
+    document.getElementById('explodeBtn').textContent = explodeTarget === 1 ? 'ประกอบกลับ' : 'แยกชิ้นส่วน';
+  };
+
+  window.resetView = function(){
+    rotY = 0.5; rotX = -0.18; autoRotate = true;
+  };
+
+  window.simulatePress3d = function(){
+    if(explodeTarget !== 0){ explodeTarget = 0; document.getElementById('explodeBtn').textContent = 'แยกชิ้นส่วน'; }
+    let t0 = performance.now();
+    function anim(){
+      const t = (performance.now()-t0)/450;
+      if(t < 1){
+        pressAmt = Math.sin(Math.min(t,1)*Math.PI);
+        gearSpin += 0.35;
+        requestAnimationFrame(anim);
+      } else {
+        pressAmt = 0;
+      }
+    }
+    anim();
+    led.material.color.set(0xF5B700);
+    led.material.emissive.set(0xF5B700);
+    led.material.emissiveIntensity = 1.2;
+    setTimeout(()=>{
+      led.material.color.set(0x333333);
+      led.material.emissive.set(0x000000);
+    }, 900);
+  };
+
+  // ---- drag to rotate ----
+  function pointerDown(e){
+    dragging = true; autoRotate = false;
+    const p = e.touches ? e.touches[0] : e;
+    lastX = p.clientX; lastY = p.clientY;
+  }
+  function pointerMove(e){
+    if(!dragging) return;
+    const p = e.touches ? e.touches[0] : e;
+    const dx = p.clientX - lastX, dy = p.clientY - lastY;
+    rotY += dx*0.008;
+    rotX += dy*0.008;
+    rotX = Math.max(-1.1, Math.min(0.6, rotX));
+    lastX = p.clientX; lastY = p.clientY;
+  }
+  function pointerUp(){ dragging = false; }
+
+  canvas.addEventListener('mousedown', pointerDown);
+  window.addEventListener('mousemove', pointerMove);
+  window.addEventListener('mouseup', pointerUp);
+  canvas.addEventListener('touchstart', pointerDown, {passive:true});
+  canvas.addEventListener('touchmove', pointerMove, {passive:true});
+  canvas.addEventListener('touchend', pointerUp);
+
+  let camDist = 12.2;
+  canvas.addEventListener('wheel', (e)=>{
+    e.preventDefault();
+    camDist += e.deltaY*0.01;
+    camDist = Math.max(6, Math.min(20, camDist));
+  }, {passive:false});
+
+  function resize(){
+    width = canvas.clientWidth;
+    if(width === 0) return;
+    renderer.setSize(width, height, false);
+    camera.aspect = width/height;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(autoRotate) rotY += 0.0022;
+    explodeAmt += (explodeTarget - explodeAmt) * 0.08;
+    layout();
+    pinions.forEach(p=> p.rotation.y = gearSpin);
+    rig.rotation.y = rotY;
+    rig.rotation.x = rotX;
+
+    camera.position.set(Math.sin(0)*0, 0, 0);
+    camera.position.set(0,4.2,camDist);
+    camera.lookAt(0, 2.4, 0);
+
+    renderer.render(scene, camera);
+  }
+  resize();
+  animate();
+})();
+</script>
+
+</body>
+</html>
