@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Checkpoint System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Sarabun', 'Inter', sans-serif;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-scale-up {
+            animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .video-container {
+            width: 100%;
+            max-width: 480px;
+            height: 360px;
+            margin: 0 auto;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background-color: #000000;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            border: 1px solid #334155;
+        }
+
+        .video-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .new-row-anim {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 relative">
+
+    <div class="max-w-7xl mx-auto animate-fade-in">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="flex justify-center items-center gap-3 mb-2">
+                <i class="fa-solid fa-shield-halved text-4xl text-blue-500 transition-transform hover:scale-110 duration-300"></i>
+                <h1 class="text-3xl md:text-4xl font-bold tracking-wide">Smart Checkpoint System</h1>
+            </div>
+            <p class="text-slate-400 text-sm">ระบบตรวจจับการสวมหมวกกันน็อคอัตโนมัติด้วย AI</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Side: Display Screen (Live Stream / Snapshot) -->
+            <div class="lg:col-span-5 card p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-camera text-slate-400"></i>
+                            <span id="streamTitle">ภาพถ่ายสตรีมสด (Live Stream)</span>
+                        </h2>
+                        <!-- Dynamic Badge (LIVE / SNAPSHOT) -->
+                        <div id="streamBadge">
+                            <span class="flex items-center gap-1.5 px-3 py-1 bg-red-500/10 text-red-400 text-xs font-semibold rounded-full border border-red-500/20 animate-pulse">
+                                <span class="w-2 h-2 bg-red-500 rounded-full"></span> LIVE
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="video-container">
+                        <!-- Main Display Image -->
+                        <img id="liveStreamImg" src="/video_feed" class="video-stream" alt="Live Stream / Snapshot">
+                        
+                        <!-- Floating Button to Return to Live Stream -->
+                        <button id="resumeLiveBtn" onclick="resumeLiveStream()" class="hidden absolute bottom-3 right-3 bg-blue-600/90 hover:bg-blue-500 text-white text-xs px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm transition-all flex items-center gap-1.5 border border-blue-400/40">
+                            <i class="fa-solid fa-play"></i> กลับสู่สตรีมสด
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-slate-800/60 rounded-lg text-xs text-slate-400 flex items-center gap-2 border border-slate-700/50">
+                    <i class="fa-regular fa-lightbulb text-amber-400"></i>
+                    <span id="streamFooterText">ระบบรับสัญญาณและประมวลผลการสวมหมวกกันน็อคแบบ Real-time</span>
+                </div>
+            </div>
+
+            <!-- Right Side: Capture History -->
+            <div class="lg:col-span-7 card p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-slate-400"></i>
+                            ประวัติการตรวจจับ (Automatic Captures)
+                        </h2>
+                        <button onclick="openClearModal()" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5">
+                            <i class="fa-regular fa-trash-can"></i> ล้างประวัติ
+                        </button>
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-slate-400 border-b border-slate-700">
+                                <tr>
+                                    <th class="pb-2">รหัสนักเรียน</th>
+                                    <th class="pb-2">เวลา / วันที่</th>
+                                    <th class="pb-2 text-center">สถานะ</th>
+                                    <th class="pb-2 text-center">ความแม่นยำรวม</th>
+                                    <th class="pb-2 text-right">หลักฐาน (คลิกดู)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable" class="divide-y divide-slate-800">
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-slate-500">
+                                        ยังไม่มีข้อมูลประวัติการตรวจจับ
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ยืนยันการล้างข้อมูล -->
+    <div id="clearModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden justify-center items-center z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-scale-up">
+            <div class="text-center">
+                <div class="w-14 h-14 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-100 mb-2">ยืนยันการล้างประวัติ?</h3>
+                <p class="text-sm text-slate-400 mb-6">ข้อมูลประวัติการตรวจจับทั้งหมดและไฟล์ที่บันทึกไว้จะถูกลบถาวร ไม่สามารถกู้คืนได้</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeClearModal()" class="w-1/2 py-2.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl transition-all duration-200">
+                    ยกเลิก
+                </button>
+                <button onclick="confirmClearHistory()" class="w-1/2 py-2.5 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg shadow-red-600/30 transition-all duration-200">
+                    ยืนยันล้างข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/live-status`);
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            if (message.type === 'history') {
+                renderHistory(message.data);
+            } else if (message.type === 'new_violation') {
+                prependHistory(message.data);
+            }
+        };
+
+        function renderHistory(data) {
+            const tbody = document.getElementById('historyTable');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">ยังไม่มีข้อมูลประวัติการตรวจจับ</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = data.map(item => createRowHTML(item, false)).join('');
+        }
+
+        function prependHistory(item) {
+            const tbody = document.getElementById('historyTable');
+            if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
+                tbody.innerHTML = '';
+            }
+            tbody.insertAdjacentHTML('afterbegin', createRowHTML(item, true));
+        }
+
+        function createRowHTML(item, isNew) {
+            const animClass = isNew ? 'new-row-anim' : '';
+            const studentId = item.student_id || 'STD00000';
+            const scoreVal = item.score || item.confidence || '0.0%';
+
+            return `
+                <tr class="hover:bg-slate-800/40 transition-colors duration-150 ${animClass}">
+                    <td class="py-3 font-mono text-slate-300 font-semibold">${studentId}</td>
+                    <td class="py-3 font-mono">
+                        <div class="text-slate-200 font-bold">${item.time}</div>
+                        <div class="text-[10px] text-slate-500">${item.date}</div>
+                    </td>
+                    <td class="py-3 text-center">
+                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                            ${item.status_text}
+                        </span>
+                    </td>
+                    <td class="py-3 text-center font-mono text-emerald-400 font-bold">${scoreVal}</td>
+                    <td class="py-3 text-right">
+                        <img src="${item.image_url}" 
+                             onclick="showInLiveFeed('${item.image_url}', '${studentId}', '${item.date} ${item.time}')" 
+                             class="w-12 h-10 object-cover rounded border border-slate-700 ml-auto cursor-pointer transition-all duration-200 hover:scale-110 hover:border-blue-500 shadow-md" 
+                             title="คลิกเพื่อแสดงในหน้าจอสตรีมหลัก"
+                             alt="evidence">
+                    </td>
+                </tr>
+            `;
+        }
+
+        // ฟังก์ชันเปลี่ยนหน้าจอหลักไปแสดงภาพประวัติที่เลือก
+        function showInLiveFeed(imgSrc, studentId, timeText) {
+            const streamImg = document.getElementById('liveStreamImg');
+            const streamBadge = document.getElementById('streamBadge');
+            const resumeBtn = document.getElementById('resumeLiveBtn');
+            const streamTitle = document.getElementById('streamTitle');
+            const streamFooterText = document.getElementById('streamFooterText');
+
+            streamImg.src = imgSrc;
+
+            streamBadge.innerHTML = `
+                <span class="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-full border border-amber-500/20">
+                    <i class="fa-solid fa-image text-[10px]"></i> SNAPSHOT
+                </span>
+            `;
+            streamTitle.innerText = `หลักฐาน: ${studentId}`;
+            streamFooterText.innerText = `กำลังแสดงภาพประวัติการตรวจผิดกฎเมื่อเวลา ${timeText}`;
+            resumeBtn.classList.remove('hidden');
+        }
+
+        // ฟังก์ชันเปลี่ยนกลับมาสตรีมวิดีโอสด
+        function resumeLiveStream() {
+            const streamImg = document.getElementById('liveStreamImg');
+            const streamBadge = document.getElementById('streamBadge');
+            const resumeBtn = document.getElementById('resumeLiveBtn');
+            const streamTitle = document.getElementById('streamTitle');
+            const streamFooterText = document.getElementById('streamFooterText');
+
+            // รีเซ็ตลิงก์สตรีมสด + เติม timestamp ป้องกันแคชเบราว์เซอร์
+            streamImg.src = "/video_feed?" + new Date().getTime();
+
+            streamBadge.innerHTML = `
+                <span class="flex items-center gap-1.5 px-3 py-1 bg-red-500/10 text-red-400 text-xs font-semibold rounded-full border border-red-500/20 animate-pulse">
+                    <span class="w-2 h-2 bg-red-500 rounded-full"></span> LIVE
+                </span>
+            `;
+            streamTitle.innerText = "ภาพถ่ายสตรีมสด (Live Stream)";
+            streamFooterText.innerText = "ระบบรับสัญญาณและประมวลผลการสวมหมวกกันน็อคแบบ Real-time";
+            resumeBtn.classList.add('hidden');
+        }
+
+        function openClearModal() {
+            const modal = document.getElementById('clearModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeClearModal() {
+            const modal = document.getElementById('clearModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        async function confirmClearHistory() {
+            await fetch('/api/clear-history', { method: 'DELETE' });
+            closeClearModal();
+            resumeLiveStream();
+        }
+    </script>
+</body>
+</html>

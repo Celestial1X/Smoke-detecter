@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+gunicorn
+tf-keras
+tensorflow
+opencv-python-headless==4.10.0.84
+requests
+jinja2
+websockets
+numpy
