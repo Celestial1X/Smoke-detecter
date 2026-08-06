@@ -11,6 +11,7 @@ import datetime
 import requests
 import threading
 import base64
+import tempfile
 import numpy as np
 import tf_keras as keras
 from typing import List
@@ -22,7 +23,7 @@ from fastapi.templating import Jinja2Templates
 
 app = FastAPI(title="Smart Checkpoint System - Production Ready")
 
-CONFIDENCE_THRESHOLD = 60.0
+CONFIDENCE_THRESHOLD = 50.0  # ปรับเกณฑ์การยืนยันลงเล็กน้อยเพื่อให้ตรวจจับได้ไวยิ่งขึ้น
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -35,7 +36,6 @@ if not os.path.exists(CAPTURES_DIR):
 app.mount("/evidence", StaticFiles(directory=CAPTURES_DIR), name="evidence")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-# ดึงค่า IP หรือ Public URL จาก Environment Variables (รองรับ Render / Cloud Deployment)
 ARDUINO_IP = os.getenv("ARDUINO_IP", "10.117.253.241")
 ESP32_CAM_IP = os.getenv("ESP32_CAM_IP", "10.117.253.95")
 
@@ -44,22 +44,31 @@ if ESP32_CAM_IP.startswith("http"):
 else:
     ESP32_CAM_CAPTURE_URL = f"http://{ESP32_CAM_IP}/capture"
 
-CASCADE_PATH = os.path.join(BASE_DIR, "haarcascade_frontalface_default.xml")
-if not os.path.exists(CASCADE_PATH):
-    CASCADE_PATH = "C:\\haarcascade_frontalface_default.xml"
+TEMP_DIR = tempfile.gettempdir()
 
-if not os.path.exists(CASCADE_PATH):
-    print("กำลังดาวน์โหลดไฟล์ Haar Cascade...")
-    try:
-        url = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml"
-        r = requests.get(url, timeout=10)
-        with open(CASCADE_PATH, 'wb') as f:
-            f.write(r.content)
-        print("ดาวน์โหลด Haar Cascade สำเร็จ")
-    except Exception as e:
-        print(f"ดาวน์โหลดไม่สำเร็จ: {e}")
+def get_safe_cascade_path(filename: str, url: str) -> str:
+    safe_path = os.path.join(TEMP_DIR, filename)
+    if not os.path.exists(safe_path) or os.path.getsize(safe_path) < 1000:
+        try:
+            r = requests.get(url, timeout=10)
+            with open(safe_path, 'wb') as f:
+                f.write(r.content)
+        except Exception as e:
+            print(f"Download Error {filename}: {e}")
+    return safe_path
+
+CASCADE_PATH = get_safe_cascade_path(
+    "haarcascade_frontalface_default.xml",
+    "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml"
+)
+
+BODY_CASCADE_PATH = get_safe_cascade_path(
+    "haarcascade_upperbody.xml",
+    "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_upperbody.xml"
+)
 
 face_cascade = cv2.CascadeClassifier(CASCADE_PATH)
+body_cascade = cv2.CascadeClassifier(BODY_CASCADE_PATH)
 
 MODEL_PATH = os.path.join(BASE_DIR, "keras_model.h5")
 if not os.path.exists(MODEL_PATH):
@@ -70,12 +79,10 @@ try:
     if os.path.exists(MODEL_PATH):
         model = keras.models.load_model(MODEL_PATH, compile=False)
         print("--------------------------------------------------")
-        print("โหลดโมเดล Keras และ Face Detector สำเร็จ")
+        print("โหลดโมเดล Keras และระบบตรวจจับวัตถุสำรอง เรียบร้อย")
         print("--------------------------------------------------")
-    else:
-        print("ไม่พบไฟล์โมเดล Keras ในโปรเจกต์")
 except Exception as e:
-    print(f"เกิดข้อผิดพลาดในการโหลดโมเดล: {e}")
+    print(f"Error loading model: {e}")
 
 def load_history():
     if os.path.exists(DATA_FILE_PATH):
@@ -91,7 +98,7 @@ def save_history():
         with open(DATA_FILE_PATH, 'w', encoding='utf-8') as f:
             json.dump(violations_history, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"เกิดข้อผิดพลาดในการบันทึกประวัติ: {e}")
+        print(f"Error saving history: {e}")
 
 violations_history = load_history()
 
@@ -141,7 +148,7 @@ class FastCameraStreamer:
                     if frame is not None and frame.size > 0:
                         with self.lock:
                             self.latest_frame = frame
-                time.sleep(0.03)
+                    time.sleep(0.03)
             except Exception:
                 time.sleep(0.1)
 
@@ -161,19 +168,6 @@ def send_result_to_arduino(state: str):
     except Exception:
         pass
 
-def calculate_iou(boxA, boxB):
-    xA = max(boxA[0], boxB[0])
-    yA = max(boxA[1], boxB[1])
-    xB = min(boxA[2], boxB[2])
-    yB = min(boxA[3], boxB[3])
-
-    interArea = max(0, xB - xA) * max(0, yB - yA)
-    boxAArea = (boxA[2] - boxA[0]) * (boxA[3] - boxA[1])
-    boxBArea = (boxB[2] - boxB[0]) * (boxB[3] - boxB[1])
-
-    iou = interArea / float(boxAArea + boxBArea - interArea + 1e-6)
-    return iou
-
 latest_ai_results = []
 is_ai_processing = False
 last_auto_record_time = 0
@@ -185,43 +179,64 @@ def async_ai_worker(frame_np):
         small_frame = cv2.resize(frame_np, (320, 240))
         gray = cv2.cvtColor(small_frame, cv2.COLOR_BGR2GRAY)
         
-        # ปรับความสว่างและลดแสงสะท้อนรบกวนด้วย CLAHE
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        # ปรับคอนทราสต์ในที่มืดด้วย CLAHE
+        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
         gray_equalized = clahe.apply(gray)
         
-        # ปรับ Parameter คัดกรองกรอบหลอก/เงามืด
-        faces = face_cascade.detectMultiScale(
-            gray_equalized, 
-            scaleFactor=1.08, 
-            minNeighbors=5, 
-            minSize=(45, 45)
-        )
+        # 1. ตรวจจับใบหน้า
+        detected_boxes = list(face_cascade.detectMultiScale(
+            gray_equalized, scaleFactor=1.05, minNeighbors=3, minSize=(25, 25)
+        ))
         
+        # 2. หากไม่พบใบหน้า ให้ตรวจจับ Upper Body
+        if len(detected_boxes) == 0 and body_cascade is not None and not body_cascade.empty():
+            bodies = body_cascade.detectMultiScale(
+                gray_equalized, scaleFactor=1.05, minNeighbors=3, minSize=(35, 35)
+            )
+            for (bx, by, bw, bh) in bodies:
+                head_h = int(bh * 0.45)
+                detected_boxes.append((bx, by, bw, head_h))
+
+        # 3. สำรองพิเศษ (Fallback): หากสแกนไม่เจอหน้า/ลำตัวเลย (เช่น ใส่หมวกกันน็อคสีดำเต็มใบ) 
+        # ระบบจะตรวจจับเค้าโครงรูปทรงศีรษะ/วัตถุขนาดใหญ่บริเวณกลางภาพ
+        if len(detected_boxes) == 0:
+            blur = cv2.GaussianBlur(gray, (5, 5), 0)
+            edges = cv2.Canny(blur, 30, 150)
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            best_box = None
+            max_area = 0
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                if area > 1200: # ขนาดวัตถุที่น่าจะเป็นหัว/หมวก
+                    x, y, w, h = cv2.boundingRect(cnt)
+                    # เลือกวัตถุที่อยู่บริเวณครึ่งบนและกลางภาพ
+                    if y < 160 and w > 40 and h > 40:
+                        if area > max_area:
+                            max_area = area
+                            best_box = (x, y, w, h)
+            
+            if best_box:
+                detected_boxes.append(best_box)
+            else:
+                # กรณีฉุกเฉิน: กำหนดพื้นที่สแกนกลางจอ เพื่อให้ AI วิเคราะห์เสมอเมื่อมีคนนั่งหน้ากล้อง
+                cw, ch = 140, 160
+                cx, cy = (320 - cw) // 2, (240 - ch) // 3
+                detected_boxes.append((cx, cy, cw, ch))
+
         new_results = []
         scale_x = w_orig / 320.0
         scale_y = h_orig / 240.0
 
-        for (sx, sy, sw, sh) in faces:
-            face_box = [int(sx * scale_x), int(sy * scale_y), int((sx + sw) * scale_x), int((sy + sh) * scale_y)]
-            
-            pad_top = int(sh * scale_y * 0.7)
-            pad_side = int(sw * scale_x * 0.2)
-            
-            y1 = max(0, face_box[1] - pad_top)
-            y2 = min(h_orig, face_box[3] + int(sh * scale_y * 0.1))
-            x1 = max(0, face_box[0] - pad_side)
-            x2 = min(w_orig, face_box[2] + pad_side)
+        for (sx, sy, sw, sh) in detected_boxes:
+            x1 = max(0, int((sx - sw * 0.1) * scale_x))
+            y1 = max(0, int((sy - sh * 0.15) * scale_y))
+            x2 = min(w_orig, int((sx + sw * 1.1) * scale_x))
+            y2 = min(h_orig, int((sy + sh * 1.15) * scale_y))
 
-            roi_box = [x1, y1, x2, y2]
             head_roi = frame_np[y1:y2, x1:x2]
             if head_roi.size == 0 or model is None:
                 continue
-
-            # กรองภาพมืด หรือภาพที่มีพื้นหลังเรียบเกินไป (Texture/Noise Filter)
-            if np.std(head_roi) < 18.0:
-                continue
-
-            iou_score = calculate_iou(face_box, roi_box)
 
             roi_resized = cv2.resize(head_roi, (224, 224))
             roi_normalized = (roi_resized.astype("float32") / 127.5) - 1.0
@@ -238,8 +253,7 @@ def async_ai_worker(frame_np):
                 is_wearing = pred_val < 0.5
                 conf = (1.0 - pred_val) * 100.0 if is_wearing else pred_val * 100.0
 
-            overall_score = conf * max(iou_score, 0.6)
-            new_results.append((face_box[0], face_box[1], face_box[2], face_box[3], is_wearing, conf, overall_score))
+            new_results.append((x1, y1, x2, y2, is_wearing, conf, conf))
 
         latest_ai_results = new_results
     except Exception as e:
@@ -269,7 +283,7 @@ def generate_cam_feed():
                 status_text = "Helmet" if is_wearing else "No Helmet"
                 text_display = f"{status_text} ({overall_score:.1f}%)"
 
-                cv2.putText(annotated_frame, text_display, (x1, max(20, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.putText(annotated_frame, text_display, (x1, max(20, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
                 if not is_wearing and conf >= CONFIDENCE_THRESHOLD:
                     current_time = time.time()
@@ -363,6 +377,5 @@ async def clear_history():
 
 if __name__ == "__main__":
     import uvicorn
-    # ปรับพอร์ตไดนามิกตามสภาพแวดล้อม Render / Local
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
